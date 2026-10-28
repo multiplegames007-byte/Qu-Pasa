@@ -900,10 +900,48 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
             />
           </div>
 
-          <div className="pt-4 flex justify-between">
+          {/* Selected Table Confirmation Strip */}
+          {selectedTable ? (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/90 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-lg shadow-sm shrink-0">
+                  {selectedTable.number}
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>Mesa {selectedTable.number} Selecionada</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900">
+                      {selectedTable.capacity} Lugares
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    {selectedTable.section === 'janela'
+                      ? '🌅 Zona da Janela · Vista Panorâmica Canal de Aveiro'
+                      : selectedTable.section === 'balcao'
+                      ? '🍸 Zona do Balcão · Cocktails & Petiscos Nikkei'
+                      : '🏮 Sala Principal Nikkei · Ambiente Qué Pasa'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(5)}
+                className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shrink-0 shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Continuar com Mesa {selectedTable.number}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+              👆 Toque numa das mesas verdes na planta interativa acima para selecionar o seu lugar.
+            </div>
+          )}
+
+          <div className="pt-2 flex justify-between">
             <button
               onClick={() => setCurrentStep(3)}
-              className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Voltar</span>
@@ -911,7 +949,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
             <button
               disabled={!selectedTable}
               onClick={() => setCurrentStep(5)}
-              className="px-7 py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white cliente-botao rounded-xl flex items-center gap-2 shadow-sm transition-all"
+              className="px-7 py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white cliente-botao rounded-xl flex items-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               <span>Inserir os Meus Dados</span>
               <ChevronRight className="w-4 h-4" />

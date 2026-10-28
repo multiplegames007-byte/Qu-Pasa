@@ -72,18 +72,27 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
         </button>
       )}
 
-      {/* 3. Sleek Minimalist Login Box (Without title or subtitle) */}
-      <div className="relative z-10 w-full max-w-sm mx-auto bg-black/45 backdrop-blur-xl border border-white/15 p-6 sm:p-8 rounded-3xl shadow-2xl">
+      {/* 3. Sleek Minimalist Login Box */}
+      <div className="relative z-10 w-full max-w-sm mx-auto bg-black/60 backdrop-blur-xl border border-white/15 p-6 sm:p-8 rounded-3xl shadow-2xl">
+        <div className="text-center mb-6">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold block mb-1">
+            Área Reservada
+          </span>
+          <h2 className="text-xl font-bold text-white tracking-wide">
+            Administração Qué Pasa
+          </h2>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-950/70 border border-red-500/40 text-red-200 text-xs rounded-xl text-center">
+            <div className="p-3 bg-red-950/80 border border-red-500/40 text-red-200 text-xs rounded-xl text-center leading-relaxed">
               {error}
             </div>
           )}
 
           <div className="space-y-3">
             <div className="relative">
-              <Mail className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 autoComplete="username"
@@ -91,15 +100,15 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 autoCorrect="off"
                 spellCheck="false"
                 required
-                placeholder="Email ou utilizador"
+                placeholder="Utilizador (ex: admin)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-3.5 text-base sm:text-sm bg-black/40 border border-white/20 hover:border-white/40 focus:border-white rounded-xl text-white placeholder-white/45 focus:outline-none transition-colors backdrop-blur-sm"
+                className="w-full pl-10 pr-4 py-3.5 text-base sm:text-sm bg-black/50 border border-white/20 hover:border-white/40 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-xl text-white placeholder-white/45 focus:outline-none transition-colors backdrop-blur-sm"
               />
             </div>
 
             <div className="relative">
-              <Lock className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="password"
                 autoComplete="current-password"
@@ -107,10 +116,10 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 autoCorrect="off"
                 spellCheck="false"
                 required
-                placeholder="Palavra-passe"
+                placeholder="Palavra-passe (ex: barbaazul2026)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3.5 text-base sm:text-sm bg-black/40 border border-white/20 hover:border-white/40 focus:border-white rounded-xl text-white placeholder-white/45 focus:outline-none transition-colors backdrop-blur-sm"
+                className="w-full pl-10 pr-4 py-3.5 text-base sm:text-sm bg-black/50 border border-white/20 hover:border-white/40 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-xl text-white placeholder-white/45 focus:outline-none transition-colors backdrop-blur-sm"
               />
             </div>
           </div>
@@ -118,12 +127,26 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 disabled:opacity-50 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shadow-lg hover:shadow-xl"
+            className="w-full mt-2 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:opacity-50 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shadow-lg hover:shadow-xl"
           >
-            <span>{isLoading ? 'A iniciar sessão...' : 'Entrar'}</span>
+            <span>{isLoading ? 'A iniciar sessão...' : 'Iniciar Sessão'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
+
+        {/* Quick Demo Access Fill Button */}
+        <div className="mt-5 pt-4 border-t border-white/10 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setUsername('admin');
+              setPassword('barbaazul2026');
+            }}
+            className="text-[11px] text-amber-300/80 hover:text-amber-300 underline underline-offset-4 cursor-pointer transition-colors"
+          >
+            Preencher dados de acesso: admin / barbaazul2026
+          </button>
+        </div>
       </div>
     </div>
   );

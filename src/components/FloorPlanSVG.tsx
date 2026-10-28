@@ -94,6 +94,16 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
       return { color: '#EF4444', statusText: 'Ocupada / Reservada neste turno', isClickable: false, badge: 'Ocupada' };
     }
 
+    // Check capacity for customer party size
+    if (requiredGuests > table.capacity) {
+      return {
+        color: '#64748B',
+        statusText: `Capacidade insuficiente (${table.capacity} lugares para ${requiredGuests} pessoas)`,
+        isClickable: false,
+        badge: `Máx ${table.capacity} pax`,
+      };
+    }
+
     return { color: '#10B981', statusText: 'Livre', isClickable: true };
   };
 
@@ -241,7 +251,7 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
           <svg
             ref={svgRef}
             viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`}
-            className={`w-full h-auto block touch-none-action ${mode === 'management' ? 'min-w-[650px] sm:min-w-full' : 'max-w-full'}`}
+            className={`w-full h-auto block touch-manipulation select-none ${mode === 'management' ? 'min-w-[650px] sm:min-w-full' : 'max-w-full'}`}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
@@ -402,6 +412,31 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
               );
             })}
 
+          {/* Authentic Qué Pasa Zone Boundaries & Labels */}
+          {/* Zona 1: Janela / Ria de Aveiro (Mesas 1 a 4) */}
+          <g opacity="0.9">
+            <rect x="70" y="58" width="220" height="22" rx="11" fill="#032b43" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.6" />
+            <text x="180" y="72" textAnchor="middle" fill="#7DD3FC" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
+              ZONA JANELA · RIA DE AVEIRO
+            </text>
+          </g>
+
+          {/* Zona 2: Sala Principal Nikkei (Mesas 5 a 10) */}
+          <g opacity="0.9">
+            <rect x="400" y="58" width="220" height="22" rx="11" fill="#1e1b4b" stroke="#818CF8" strokeWidth="1" strokeOpacity="0.6" />
+            <text x="510" y="72" textAnchor="middle" fill="#C7D2FE" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
+              SALA PRINCIPAL NIKKEI
+            </text>
+          </g>
+
+          {/* Zona 3: Balcão & Petiscos (Mesas 11 e 12) */}
+          <g opacity="0.9">
+            <rect x="750" y="75" width="170" height="22" rx="11" fill="#3b2003" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.6" />
+            <text x="835" y="89" textAnchor="middle" fill="#FDE68A" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
+              BALCÃO & PETISCOS
+            </text>
+          </g>
+
           {/* THE 12 CIRCULAR TABLES */}
           {tables.map((table) => {
             const isSelected = selectedTableId === table.id;
@@ -437,6 +472,13 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
                 }`}
                 onPointerDown={(e) => handlePointerDown(e, table)}
                 onClick={() => {
+                  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    try {
+                      navigator.vibrate(25);
+                    } catch {
+                      // ignore
+                    }
+                  }
                   if (mode === 'customer') {
                     if (isClickable && onSelectTable) {
                       onSelectTable(table);
@@ -450,6 +492,15 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
                 onMouseEnter={() => setHoveredTableId(table.id)}
                 onMouseLeave={() => setHoveredTableId(null)}
               >
+                {/* Generous touch / click hit area for mobile and desktop */}
+                <circle
+                  cx={table.x}
+                  cy={table.y}
+                  r={table.radius + 18}
+                  fill="transparent"
+                  pointerEvents="all"
+                  cursor={isClickable ? 'pointer' : 'not-allowed'}
+                />
                 {/* Decorative Chairs around table */}
                 {renderChairs(table, isSelected)}
 
