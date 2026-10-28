@@ -18,19 +18,91 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <script>
-      // Safe guard for HMR WebSockets in proxy container environments
-      window.addEventListener('error', function(e) {
-        if (e && (e.message?.includes?.('WebSocket') || e.filename?.includes?.('@vite/client'))) {
-          e.preventDefault?.();
-          e.stopImmediatePropagation?.();
+      (function() {
+        // 1. Silent Mock for Vite HMR WebSocket in cloud proxy environments
+        if (typeof window !== 'undefined' && window.WebSocket) {
+          var RealWebSocket = window.WebSocket;
+          window.WebSocket = function(url, protocols) {
+            var strUrl = String(url || '');
+            var strProto = String(protocols || '');
+            if (
+              strProto === 'vite-hmr' ||
+              strProto.indexOf('vite') !== -1 ||
+              strUrl.indexOf('@vite') !== -1 ||
+              strUrl.indexOf('/vite-hmr') !== -1 ||
+              strUrl.indexOf('token=') !== -1
+            ) {
+              var listeners = {};
+              var dummy = {
+                readyState: 1,
+                binaryType: 'blob',
+                bufferedAmount: 0,
+                extensions: '',
+                protocol: 'vite-hmr',
+                url: strUrl,
+                send: function() {},
+                close: function() {},
+                addEventListener: function(type, fn) {
+                  if (!listeners[type]) listeners[type] = [];
+                  listeners[type].push(fn);
+                },
+                removeEventListener: function(type, fn) {
+                  if (!listeners[type]) return;
+                  listeners[type] = listeners[type].filter(function(f) { return f !== fn; });
+                },
+                dispatchEvent: function() { return false; },
+                onopen: null,
+                onmessage: null,
+                onerror: null,
+                onclose: null,
+              };
+              setTimeout(function() {
+                try {
+                  if (typeof dummy.onopen === 'function') dummy.onopen({ type: 'open' });
+                  if (listeners['open']) {
+                    listeners['open'].forEach(function(fn) { fn({ type: 'open' }); });
+                  }
+                } catch(e) {}
+              }, 10);
+              return dummy;
+            }
+            return new RealWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = RealWebSocket.prototype;
+          window.WebSocket.CONNECTING = RealWebSocket.CONNECTING;
+          window.WebSocket.OPEN = RealWebSocket.OPEN;
+          window.WebSocket.CLOSING = RealWebSocket.CLOSING;
+          window.WebSocket.CLOSED = RealWebSocket.CLOSED;
         }
-      }, true);
-      window.addEventListener('unhandledrejection', function(e) {
-        if (e && (String(e.reason).includes('WebSocket') || e.reason?.message?.includes?.('WebSocket'))) {
-          e.preventDefault?.();
-          e.stopImmediatePropagation?.();
-        }
-      }, true);
+
+        // 2. Global Error Suppressors for any stray HMR / WebSocket messages
+        var origOnError = window.onerror;
+        window.onerror = function(msg, src, line, col, err) {
+          var text = String(msg || '') + ' ' + String(src || '') + ' ' + (err ? String(err.message || '') : '');
+          if (text.indexOf('WebSocket') !== -1 || text.indexOf('@vite/client') !== -1) {
+            return true;
+          }
+          if (origOnError) return origOnError.apply(this, arguments);
+        };
+
+        window.addEventListener('error', function(e) {
+          var msg = (e && (e.message || (e.error && e.error.message))) || '';
+          var file = (e && e.filename) || '';
+          if (String(msg).indexOf('WebSocket') !== -1 || String(file).indexOf('@vite/client') !== -1) {
+            e.preventDefault && e.preventDefault();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = (e && e.reason) ? (e.reason.message || String(e.reason)) : '';
+          if (String(reason).indexOf('WebSocket') !== -1 || String(reason).indexOf('@vite/client') !== -1) {
+            e.preventDefault && e.preventDefault();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+          }
+        }, true);
+      })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
