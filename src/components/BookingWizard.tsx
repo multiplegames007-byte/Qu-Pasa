@@ -255,34 +255,23 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
   // Handle table selection (persists until booking is confirmed)
   const handleSelectTable = (table: RestaurantTable) => {
-    // Rule: if 2 people (or 1), cannot select tables with capacity > 2
-    if (guests <= 2 && table.capacity > 2) {
-      alert(`Para grupos de ${guests} pessoas, apenas é permitido selecionar mesas de 2 pessoas (Mesas 4, 5, 6, 7, 8, 9 e 11).`);
-      return;
-    }
-    // Rule: if > 2 people, cannot select tables of 2
-    if (guests > 2 && table.capacity < guests) {
-      alert(`Esta mesa tem capacidade apenas para ${table.capacity} pessoas e o seu grupo é de ${guests} pessoas.`);
-      return;
-    }
-
     setSelectedTable(table);
     setAutoAssigned(false);
   };
 
   // Auto Assign Smart Best Table
   const handleAutoAssign = () => {
-    const eligible = tables.filter((t) => {
+    // Prefer tables with capacity >= guests, or any free active table
+    const freeTables = tables.filter((t) => {
       if (!t.isActive) return false;
-      // Rule: if 2 people, must be capacity 2
-      if (guests <= 2 && t.capacity > 2) return false;
-      // Rule: if > 2 people, must be capacity >= guests
-      if (guests > 2 && t.capacity < guests) return false;
       const status = tableAvailabilityMap[t.id];
       return status ? status.isFree && !status.isBlocked : true;
     });
 
-    if (eligible.length === 0) {
+    const eligible = freeTables.filter((t) => t.capacity >= guests);
+    const chosenList = eligible.length > 0 ? eligible : freeTables;
+
+    if (chosenList.length === 0) {
       alert('Não temos mesas livres disponíveis para o tamanho do seu grupo neste turno.');
       return;
     }
@@ -843,11 +832,9 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
             </div>
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2">
               {tables.map((t) => {
-                const isTooBig = guests <= 2 && t.capacity > 2;
-                const isTooSmall = guests > 2 && t.capacity < guests;
                 const avail = tableAvailabilityMap[t.id];
                 const isFree = avail ? avail.isFree : true;
-                const isClickable = t.isActive && !isTooBig && !isTooSmall && isFree;
+                const isClickable = t.isActive && isFree;
                 const isSelected = selectedTable?.id === t.id;
 
                 return (

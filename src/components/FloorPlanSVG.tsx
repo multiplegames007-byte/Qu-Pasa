@@ -86,26 +86,6 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
       return { color: '#94A3B8', statusText: 'Inativa', isClickable: false, badge: 'Desativada' };
     }
 
-    // Rule 1: If 2 people (or 1), cannot select tables with capacity > 2
-    if (requiredGuests <= 2 && table.capacity > 2) {
-      return {
-        color: '#CBD5E1',
-        statusText: `Mesa reservada para grupos superiores a 2 pessoas (capacidade: ${table.capacity})`,
-        isClickable: false,
-        badge: 'Grupos > 2',
-      };
-    }
-
-    // Rule 2: If more than 2 people, cannot select tables with capacity < requiredGuests (tables of 2 are disabled)
-    if (requiredGuests > 2 && table.capacity < requiredGuests) {
-      return {
-        color: '#CBD5E1',
-        statusText: `Capacidade insuficiente (máx. ${table.capacity} pessoas)`,
-        isClickable: false,
-        badge: `Máx. ${table.capacity}`,
-      };
-    }
-
     const avail = tableAvailabilityMap[table.id];
     if (avail?.isBlocked) {
       return { color: '#F59E0B', statusText: 'Bloqueada temporariamente', isClickable: false, badge: 'Em reserva' };

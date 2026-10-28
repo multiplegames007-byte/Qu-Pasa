@@ -453,6 +453,33 @@ export function addReservation(reservation: Omit<Reservation, 'id' | 'code' | 'c
   // Release any temporary holds for this table
   releaseTableHold(newRes.tableId);
 
+  // Notificar Webhook n8n
+  try {
+    fetch('https://simaoramos.app.n8n.cloud/webhook/nova-reserva', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'nova_reserva',
+        timestamp: new Date().toISOString(),
+        cliente: newRes.customerName,
+        nome: newRes.customerName,
+        telemovel: newRes.customerPhone,
+        telefone: newRes.customerPhone,
+        email: newRes.customerEmail,
+        data: newRes.date,
+        hora: newRes.time,
+        pessoas: newRes.guests,
+        pax: newRes.guests,
+        mesa: newRes.tableId,
+        pedidos_especiais: (newRes.specialRequests || []).join(', '),
+        notas: newRes.notes || '',
+        reservation: newRes,
+      }),
+    }).catch(() => {});
+  } catch {
+    // ignore
+  }
+
   return newRes;
 }
 

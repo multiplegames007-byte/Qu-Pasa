@@ -1,73 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard,
   CalendarDays,
-  Compass,
-  Clock,
+  Layers,
   Users,
-  Settings as SettingsIcon,
   BarChart3,
+  Bell,
+  Settings as SettingsIcon,
+  Plus,
+  Search,
+  Menu,
+  X,
   LogOut,
   Moon,
   Sun,
-  Plus,
-  Search,
-  Filter,
   Download,
+  Calendar,
+  Clock,
   CheckCircle2,
   AlertTriangle,
+  XCircle,
   UserCheck,
-  ShieldCheck,
-  Star,
-  Trash2,
   Edit2,
+  Trash2,
   RefreshCw,
-  Bell,
-  Eye,
-  ArrowRightLeft,
-  Lock,
-  Unlock,
   Mail,
-  Smartphone
+  Zap,
+  Phone,
+  Shield,
+  ChevronRight,
+  TrendingUp,
+  Percent,
+  Check,
+  Filter,
+  Eye,
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 import {
   UserAccount,
   RestaurantTable,
   Reservation,
-  WaitlistEntry,
   CustomerProfile,
   RestaurantSettings,
   BlockedPeriod,
   OwnerNotification,
-  TableStatus
+  TableStatus,
+  ReservationStatus
 } from '../../types/index.ts';
 import {
   fetchOwnerAllData,
   fetchOwnerDaySummary,
-  createOwnerReservation,
   updateOwnerReservation,
   deleteOwnerReservation,
-  saveOwnerTablesLayout,
-  updateOwnerTable,
   deleteOwnerBlock,
   markOwnerNotificationsRead,
-  updateOwnerCustomer,
   gdprDeleteOwnerCustomer,
   saveOwnerSettings,
-  resetOwnerDemo,
-  ownerLogout,
-  resendOwnerSms,
-  resendOwnerEmail,
-  sendOwnerReminder,
-  testBrevoConnection
+  ownerLogout
 } from '../../services/api.ts';
 import { getTodayStr, exportReservationsToCsv } from '../../services/storage.ts';
 import { FloorPlanSVG } from '../FloorPlanSVG.tsx';
 import { ManualReservationModal } from './ManualReservationModal.tsx';
 import { TableDetailModal } from './TableDetailModal.tsx';
 import { BlockPeriodModal } from './BlockPeriodModal.tsx';
-import { SmsPreviewModal } from '../SmsPreviewModal.tsx';
-import { PWAInstallButton } from '../PWAInstallButton.tsx';
 import { GoogleSignInButton } from '../GoogleSignInButton.tsx';
 import { GmailConfirmModal } from '../GmailConfirmModal.tsx';
 import { initAuth, googleSignIn, logoutGoogle, getAccessToken } from '../../services/googleAuth.ts';
@@ -79,21 +75,37 @@ interface AdminPanelProps {
   onLogout: () => void;
 }
 
+type AdminSection =
+  | 'dashboard'
+  | 'reservas'
+  | 'mesas'
+  | 'clientes'
+  | 'estatisticas'
+  | 'notificacoes'
+  | 'configuracoes';
+
+const N8N_WEBHOOK_URL = 'https://simaoramos.app.n8n.cloud/webhook/nova-reserva';
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dia' | 'reservas' | 'editor' | 'bloqueios' | 'espera' | 'clientes' | 'relatorios' | 'configuracoes'>('resumo');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  // Navigation & UI State
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Core Data States
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [settings, setSettings] = useState<RestaurantSettings | null>(null);
   const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([]);
   const [notifications, setNotifications] = useState<OwnerNotification[]>([]);
 
-  // Day Summary
+  // Selected Date Filter (Dashboard & Tables)
   const [selectedDate, setSelectedDate] = useState<string>(getTodayStr());
+  const [dashboardDateFilter, setDashboardDateFilter] = useState<'hoje' | 'amanha' | 'semana' | 'personalizado'>('hoje');
+
+  // Day Summary
   const [daySummary, setDaySummary] = useState<{
     totalReservations: number;
     expectedGuests: number;
@@ -110,26 +122,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     unreadNotifications: 0,
   });
 
-  // Filters & Search
-  const [statusFilter, setStatusFilter] = useState<string>('todas');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  // Reservations View State
+  const [reservationViewMode, setReservationViewMode] = useState<'tabela' | 'turnos'>('tabela');
+  const [resSearchQuery, setResSearchQuery] = useState('');
+  const [resStatusFilter, setResStatusFilter] = useState<string>('todas');
+  const [resPaxFilter, setResPaxFilter] = useState<string>('todos');
+  const [resDateFilter, setResDateFilter] = useState<'todas' | 'hoje' | 'amanha' | 'semana'>('todas');
+
+  // Customers View State
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+
+  // Statistics View State
+  const [statsPeriod, setStatsPeriod] = useState<'7dias' | '30dias' | 'tudo'>('30dias');
 
   // Modals
-  const [showManualModal, setShowManualModal] = useState<boolean>(false);
-  const [showBlockModal, setShowBlockModal] = useState<boolean>(false);
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const [selectedTableForModal, setSelectedTableForModal] = useState<RestaurantTable | null>(null);
-  const [showNotificationsDrawer, setShowNotificationsDrawer] = useState<boolean>(false);
-  const [selectedReservationForSms, setSelectedReservationForSms] = useState<Reservation | null>(null);
-  const [showSmsModal, setShowSmsModal] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Google Workspace / Gmail Integration State
+  // Google / Gmail Integration
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
-  const [isGoogleConnecting, setIsGoogleConnecting] = useState<boolean>(false);
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [selectedReservationForGmail, setSelectedReservationForGmail] = useState<Reservation | null>(null);
-  const [showGmailModal, setShowGmailModal] = useState<boolean>(false);
-  const [isSendingGmail, setIsSendingGmail] = useState<boolean>(false);
+  const [showGmailModal, setShowGmailModal] = useState(false);
+  const [isSendingGmail, setIsSendingGmail] = useState(false);
 
+  // Webhook Test State
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+
+  // Push notifications permission
+  const [pushEnabled, setPushEnabled] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
+  );
+
+  // Show temporary toast message
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Google Auth lifecycle
   useEffect(() => {
     const unsubscribe = initAuth(
       (u) => setGoogleUser(u),
@@ -140,6 +173,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     };
   }, []);
 
+  // Fetch all backend data
+  const loadAll = async () => {
+    try {
+      const data = await fetchOwnerAllData();
+      setTables(data.tables);
+      setReservations(data.reservations);
+      setCustomers(data.customers);
+      setSettings(data.settings);
+      setBlockedPeriods(data.blockedPeriods);
+      setNotifications(data.notifications);
+
+      const summary = await fetchOwnerDaySummary(selectedDate);
+      setDaySummary(summary);
+    } catch (err) {
+      console.error('Erro ao carregar dados do proprietário:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadAll();
+    // 8-second polling for live updates
+    const interval = setInterval(loadAll, 8000);
+    return () => clearInterval(interval);
+  }, [selectedDate]);
+
+  // Google OAuth Handlers
   const handleGoogleConnect = async () => {
     setIsGoogleConnecting(true);
     try {
@@ -149,7 +208,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
         showToast(`Conectado ao Gmail: ${res.user.email}`);
       }
     } catch (err: any) {
-      showToast(err.message || 'Erro ao conectar ao Google');
+      showToast(err.message || 'Erro ao autenticar com Google');
     } finally {
       setIsGoogleConnecting(false);
     }
@@ -191,10 +250,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       await sendGmailMessage({
         to: selectedReservationForGmail.customerEmail,
         subject: `Confirmação de Reserva Oficial · Qué Pasa (${selectedReservationForGmail.code})`,
-        bodyText: `Olá ${selectedReservationForGmail.customerName},\n\nA sua mesa para ${selectedReservationForGmail.guests} pessoas no Qué Pasa está confirmada para ${selectedReservationForGmail.date} às ${selectedReservationForGmail.time} (Mesa ${selectedReservationForGmail.tableId}).\nCódigo: ${selectedReservationForGmail.code}.\n\nCais dos Mercantéis 14, Aveiro.`,
+        bodyText: `Olá ${selectedReservationForGmail.customerName},\n\nA sua mesa para ${selectedReservationForGmail.guests} pessoas no Qué Pasa está confirmada para ${selectedReservationForGmail.date} às ${selectedReservationForGmail.time} (Mesa ${selectedReservationForGmail.tableId}).\nTelefone do restaurante: 234 424 208.\n\nCais dos Mercantéis 14, Aveiro.`,
         bodyHtml: html,
       });
-      showToast(`Aviso enviado com sucesso via Gmail para ${selectedReservationForGmail.customerEmail}!`);
+      showToast(`Email de confirmação enviado para ${selectedReservationForGmail.customerEmail}!`);
       setShowGmailModal(false);
       setSelectedReservationForGmail(null);
     } catch (err: any) {
@@ -204,106 +263,75 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     }
   };
 
-  // Brevo Test State
-  const [isTestingBrevo, setIsTestingBrevo] = useState<boolean>(false);
-  const [brevoTestResult, setBrevoTestResult] = useState<{ success?: boolean; message?: string } | null>(null);
-
-  const handleTestBrevo = async () => {
-    setIsTestingBrevo(true);
-    setBrevoTestResult(null);
+  // Test n8n Webhook
+  const handleTestWebhook = async () => {
+    setIsTestingWebhook(true);
     try {
-      const res = await testBrevoConnection({
-        apiKey: settings?.brevoApiKey,
-        senderEmail: settings?.brevoSenderEmail,
-        senderName: settings?.brevoSenderName,
-        testRecipient: settings?.ownerEmail || 'dono@barbaazul.pt',
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'test_webhook',
+          restaurant: 'Qué Pasa · Aveiro',
+          timestamp: new Date().toISOString(),
+          phone: '234 424 208',
+          message: 'Teste de disparo de webhook do painel admin',
+        }),
       });
-      setBrevoTestResult({
-        success: true,
-        message: `Conexão Brevo bem sucedida! Email de teste enviado para ${res.recipient} (ID: ${res.messageId})`,
-      });
-      showToast('Brevo conectado com sucesso!');
-    } catch (err: any) {
-      setBrevoTestResult({
-        success: false,
-        message: err.message || 'Erro ao comunicar com a API da Brevo.',
-      });
-      showToast('Falha no teste Brevo');
+      if (response.ok) {
+        showToast('Webhook n8n disparado com sucesso!');
+      } else {
+        showToast(`Webhook respondeu status ${response.status}`);
+      }
+    } catch {
+      showToast('Erro ao contactar webhook n8n');
     } finally {
-      setIsTestingBrevo(false);
+      setIsTestingWebhook(false);
     }
   };
 
-  // Push notifications permission status
-  const [pushEnabled, setPushEnabled] = useState<boolean>(
-    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
-  );
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Load all data
-  const loadAll = async () => {
-    try {
-      const data = await fetchOwnerAllData();
-      setTables(data.tables);
-      setReservations(data.reservations);
-      setCustomers(data.customers);
-      setWaitlist(data.waitlist);
-      setSettings(data.settings);
-      setBlockedPeriods(data.blockedPeriods);
-      setNotifications(data.notifications);
-
-      const summary = await fetchOwnerDaySummary(selectedDate);
-      setDaySummary(summary);
-    } catch (err) {
-      console.error('Error loading owner data:', err);
-    }
-  };
-
-  useEffect(() => {
-    loadAll();
-    // Real-time polling every 8 seconds for new reservations and table changes
-    const interval = setInterval(loadAll, 8000);
-    return () => clearInterval(interval);
-  }, [selectedDate]);
-
-  // Request browser push notification permission
+  // Request browser push permissions
   const handleRequestPush = async () => {
     if ('Notification' in window) {
       const perm = await Notification.requestPermission();
       if (perm === 'granted') {
         setPushEnabled(true);
-        showToast('Notificações push ativadas com sucesso!');
-        new Notification('Qué Pasa', {
+        showToast('Notificações no telemóvel ativadas!');
+        new Notification('Qué Pasa · Aveiro', {
           body: 'Notificações ativas: receberá alertas instantâneos de novas reservas.',
-          icon: '/icon.svg',
+          icon: '/favicon.ico',
         });
       }
     }
   };
 
-  // Logout
   const handleLogout = async () => {
     await ownerLogout();
     onLogout();
   };
 
-  // Drag position update in Editor mode
-  const handleUpdateTablePosition = (id: number, x: number, y: number) => {
-    const updated = tables.map((t) => (t.id === id ? { ...t, x, y } : t));
-    setTables(updated);
-  };
+  // Format today's date in Portuguese
+  const formattedToday = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat('pt-PT', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }).format(new Date());
+    } catch {
+      return getTodayStr();
+    }
+  }, []);
 
-  // Build live table status map
-  const tableStatusMap = React.useMemo(() => {
+  // Compute table status map for floor plan
+  const tableStatusMap = useMemo(() => {
     const map: Record<number, { status: TableStatus; currentReservation?: Reservation }> = {};
-    const dayRes = reservations.filter((r) => r.date === selectedDate && r.status !== 'cancelada' && r.status !== 'noshow');
+    const dayRes = reservations.filter(
+      (r) => r.date === selectedDate && r.status !== 'cancelada' && r.status !== 'noshow'
+    );
 
     tables.forEach((t) => {
-      // Check block
       const hasBlock = blockedPeriods.some(
         (b) => b.date === selectedDate && (b.tableId === t.id || b.tableId === null)
       );
@@ -331,350 +359,1444 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     return map;
   }, [tables, reservations, selectedDate, blockedPeriods]);
 
-  // Filtered reservations
-  const filteredReservations = React.useMemo(() => {
+  // Dashboard filtered reservations for the active day
+  const todayReservations = useMemo(() => {
+    return reservations
+      .filter((r) => r.date === selectedDate)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [reservations, selectedDate]);
+
+  // Pending reservations for today
+  const pendingReservationsCount = useMemo(() => {
+    return reservations.filter(
+      (r) => r.date === selectedDate && (r.status === 'pendente' || r.status === 'confirmada')
+    ).length;
+  }, [reservations, selectedDate]);
+
+  // Estimated occupancy rate for today (% of available 12 tables over 4 shifts = 48 seating opportunities)
+  const occupancyRate = useMemo(() => {
+    const activeToday = reservations.filter(
+      (r) => r.date === selectedDate && r.status !== 'cancelada' && r.status !== 'noshow'
+    );
+    const totalSlotsPossible = 12 * 4; // 12 tables across 4 shifts (12:30, 14:00, 19:30, 21:00)
+    const rate = Math.min(100, Math.round((activeToday.length / totalSlotsPossible) * 100));
+    return rate;
+  }, [reservations, selectedDate]);
+
+  // Distribution by shift for today
+  const shiftDistribution = useMemo(() => {
+    const lunchSlots = ['12:30', '14:00'];
+    const dinnerSlots = ['19:30', '21:00'];
+
+    const getCount = (slot: string) =>
+      reservations.filter(
+        (r) => r.date === selectedDate && r.time === slot && r.status !== 'cancelada' && r.status !== 'noshow'
+      ).length;
+
+    return {
+      lunch1: { time: '12:30', count: getCount('12:30') },
+      lunch2: { time: '14:00', count: getCount('14:00') },
+      dinner1: { time: '19:30', count: getCount('19:30') },
+      dinner2: { time: '21:00', count: getCount('21:00') },
+    };
+  }, [reservations, selectedDate]);
+
+  // All reservations with multi-filtering
+  const filteredReservations = useMemo(() => {
+    const today = getTodayStr();
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+
     return reservations.filter((r) => {
-      if (statusFilter !== 'todas' && r.status !== statusFilter) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      // Date filter
+      if (resDateFilter === 'hoje' && r.date !== today) return false;
+      if (resDateFilter === 'amanha' && r.date !== tomorrowStr) return false;
+      if (resDateFilter === 'semana') {
+        const resDate = new Date(r.date);
+        const now = new Date();
+        const diffDays = (resDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+        if (diffDays < -1 || diffDays > 7) return false;
+      }
+
+      // Status filter
+      if (resStatusFilter !== 'todas' && r.status !== resStatusFilter) return false;
+
+      // Pax filter
+      if (resPaxFilter === '1-2' && r.guests > 2) return false;
+      if (resPaxFilter === '3-4' && (r.guests < 3 || r.guests > 4)) return false;
+      if (resPaxFilter === '5+' && r.guests < 5) return false;
+
+      // Search query
+      if (resSearchQuery.trim()) {
+        const q = resSearchQuery.toLowerCase();
         const matchesName = r.customerName.toLowerCase().includes(q);
         const matchesPhone = r.customerPhone.includes(q);
         const matchesCode = r.code.toLowerCase().includes(q);
-        if (!matchesName && !matchesPhone && !matchesCode) return false;
+        const matchesTable = `mesa ${r.tableId}`.includes(q);
+        if (!matchesName && !matchesPhone && !matchesCode && !matchesTable) return false;
       }
+
       return true;
+    }).sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return a.time.localeCompare(b.time);
     });
-  }, [reservations, statusFilter, searchQuery]);
+  }, [reservations, resDateFilter, resStatusFilter, resPaxFilter, resSearchQuery]);
 
-  // Reports
-  const reportStats = React.useMemo(() => {
-    const totalRes = reservations.length;
-    const confirmedRes = reservations.filter((r) => ['confirmada', 'sentada', 'concluida'].includes(r.status));
-    const noShowRes = reservations.filter((r) => r.status === 'noshow');
-    const cancelledRes = reservations.filter((r) => r.status === 'cancelada');
-    const totalPax = confirmedRes.reduce((acc, r) => acc + r.guests, 0);
+  // Customers filtered
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearchQuery.trim()) return customers;
+    const q = customerSearchQuery.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.phone.includes(q) ||
+        c.email.toLowerCase().includes(q)
+    );
+  }, [customers, customerSearchQuery]);
 
-    const noShowRate = totalRes ? Math.round((noShowRes.length / totalRes) * 100) : 0;
-    const cancelRate = totalRes ? Math.round((cancelledRes.length / totalRes) * 100) : 0;
+  // Statistics calculation
+  const statsData = useMemo(() => {
+    let pool = [...reservations];
+    const now = new Date();
+
+    if (statsPeriod === '7dias') {
+      pool = pool.filter((r) => {
+        const diff = (now.getTime() - new Date(r.date).getTime()) / (1000 * 3600 * 24);
+        return diff >= 0 && diff <= 7;
+      });
+    } else if (statsPeriod === '30dias') {
+      pool = pool.filter((r) => {
+        const diff = (now.getTime() - new Date(r.date).getTime()) / (1000 * 3600 * 24);
+        return diff >= 0 && diff <= 30;
+      });
+    }
+
+    const total = pool.length;
+    const confirmedOrDone = pool.filter((r) => ['confirmada', 'chegou', 'sentada', 'concluida'].includes(r.status));
+    const totalGuests = confirmedOrDone.reduce((acc, r) => acc + r.guests, 0);
+    const avgGuests = confirmedOrDone.length ? (totalGuests / confirmedOrDone.length).toFixed(1) : '0';
+
+    const cancelled = pool.filter((r) => r.status === 'cancelada').length;
+    const cancelRate = total ? Math.round((cancelled / total) * 100) : 0;
+
+    const noShow = pool.filter((r) => r.status === 'noshow').length;
+    const noShowRate = total ? Math.round((noShow / total) * 100) : 0;
+
+    const recurringCustomers = customers.filter((c) => c.visitsCount > 1).length;
+    const recurringRate = customers.length ? Math.round((recurringCustomers / customers.length) * 100) : 0;
+
+    // Shift distribution
+    const lunchCount = pool.filter((r) => r.time === '12:30' || r.time === '14:00').length;
+    const dinnerCount = pool.filter((r) => r.time === '19:30' || r.time === '21:00').length;
 
     return {
-      totalRes,
-      totalPax,
-      noShowRate,
+      total,
+      totalGuests,
+      avgGuests,
+      cancelled,
       cancelRate,
+      noShow,
+      noShowRate,
+      recurringRate,
+      lunchCount,
+      dinnerCount,
     };
-  }, [reservations]);
+  }, [reservations, customers, statsPeriod]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+
+  // Status badge styling helper
+  const renderStatusBadge = (status: ReservationStatus) => {
+    switch (status) {
+      case 'sentada':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/25">
+            Sentada
+          </span>
+        );
+      case 'chegou':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+            Chegou
+          </span>
+        );
+      case 'confirmada':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+            Confirmada
+          </span>
+        );
+      case 'concluida':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/25">
+            Concluída
+          </span>
+        );
+      case 'cancelada':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-neutral-700/50 text-neutral-400 border border-neutral-600/50">
+            Cancelada
+          </span>
+        );
+      case 'noshow':
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">
+            No-Show
+          </span>
+        );
+      case 'pendente':
+      default:
+        return (
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">
+            Pendente
+          </span>
+        );
+    }
+  };
+
+  // Section title mapping
+  const sectionTitleMap: Record<AdminSection, string> = {
+    dashboard: 'Dashboard',
+    reservas: 'Reservas',
+    mesas: 'Mesas e Ocupação',
+    clientes: 'Clientes',
+    estatisticas: 'Estatísticas e Relatórios',
+    notificacoes: 'Notificações',
+    configuracoes: 'Configurações',
+  };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors duration-200`}>
+    <div className={`min-h-screen ${isDarkMode ? 'dark bg-neutral-950 text-neutral-100' : 'bg-slate-50 text-neutral-900'} font-sans flex antialiased selection:bg-amber-500/30 selection:text-amber-200 transition-colors duration-200`}>
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-amber-500 text-slate-950 px-4 py-2.5 rounded-xl font-bold text-xs shadow-2xl flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
+        <div className="fixed top-4 right-4 z-50 bg-amber-500 text-neutral-950 px-4 py-2.5 rounded-xl font-sans font-bold text-sm shadow-2xl flex items-center gap-2 animate-fade-in border border-amber-400">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* TOP HEADER BAR */}
-      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold font-serif-display text-lg">
-            QP
-          </div>
-          <div>
-            <h1 className="dashboard-titulo text-white tracking-tight leading-none">
-              o que pasa
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5 font-medium">
-              by Barba Azul · Dashboard Privado do Dono
-            </p>
-          </div>
-        </div>
-
-        {/* Header Right Actions */}
-        <div className="flex items-center gap-2.5">
-          {/* Gmail Integration Status / Button */}
-          {googleUser ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
-              <Mail className="w-3.5 h-3.5 text-red-400" />
-              <span className="hidden sm:inline font-medium truncate max-w-[150px]">{googleUser.email}</span>
-              <span className="sm:hidden font-medium">Gmail</span>
-              <button
-                type="button"
-                onClick={handleGoogleDisconnect}
-                className="text-slate-400 hover:text-white text-[10px] underline ml-1 cursor-pointer"
-                title="Desconectar Gmail"
-              >
-                Sair
-              </button>
-            </div>
-          ) : (
-            <GoogleSignInButton
-              onClick={handleGoogleConnect}
-              isLoading={isGoogleConnecting}
-              text="Conectar Gmail"
-              className="py-1.5 px-3 text-xs"
-            />
-          )}
-
-          {/* PWA Install Button (Prompt) */}
-          <PWAInstallButton variant="compact" />
-
-          {/* Push notification toggle */}
-          {!pushEnabled && (
-            <button
-              onClick={handleRequestPush}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold border border-amber-500/20"
-              title="Ativar Notificações no Telemóvel"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              <span>Ativar Notificações</span>
-            </button>
-          )}
-
-          {/* Notifications Bell */}
-          <button
-            onClick={() => {
-              setShowNotificationsDrawer(!showNotificationsDrawer);
-              if (unreadCount > 0) markOwnerNotificationsRead();
-            }}
-            className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            title="Novas Reservas"
-          >
-            <Bell className="w-4 h-4" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Dark / Light Toggle */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-400" />}
-          </button>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-slate-800 transition-colors"
-            title="Terminar Sessão"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* NAVIGATION TABS */}
-      <nav className="bg-slate-900/90 border-b border-slate-800 px-4 sm:px-6 overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max py-2 text-xs font-medium">
-          <button
-            onClick={() => setActiveTab('resumo')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'resumo' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Resumo do Dia</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('dia')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'dia' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Planta em Tempo Real (12 Mesas)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('reservas')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'reservas' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <CalendarDays className="w-4 h-4" />
-            <span>Reservas</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('bloqueios')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'bloqueios' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <Lock className="w-4 h-4" />
-            <span>Bloqueios & Folgas</span>
-            {blockedPeriods.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 text-[10px] flex items-center justify-center font-bold">
-                {blockedPeriods.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('editor')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'editor' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <ArrowRightLeft className="w-4 h-4" />
-            <span>Editor da Planta</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('clientes')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'clientes' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Base de Clientes</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('relatorios')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'relatorios' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Relatórios</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('configuracoes')}
-            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all ${
-              activeTab === 'configuracoes' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <SettingsIcon className="w-4 h-4" />
-            <span>Configurações</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* NOTIFICATIONS DRAWER (NEW BOOKING ALERTS) */}
-      {showNotificationsDrawer && (
-        <div className="fixed inset-y-0 right-0 z-50 w-80 bg-slate-900 border-l border-slate-800 shadow-2xl p-5 flex flex-col animate-slide-left">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-              <Bell className="w-4 h-4" />
-              <span>Notificações de Reservas</span>
-            </div>
-            <button onClick={() => setShowNotificationsDrawer(false)} className="text-slate-400 hover:text-white">
-              ✕
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-800 pt-2 space-y-2">
-            {notifications.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-xs">Sem notificações recentes.</div>
-            ) : (
-              notifications.map((n) => (
-                <div key={n.id} className="pt-2 pb-2 space-y-1 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-amber-400">{n.title}</span>
-                    <span className="text-[10px] text-slate-500">{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <p className="text-slate-300 text-[11px] leading-relaxed">{n.message}</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 pt-0.5">
-                    <Mail className="w-3 h-3" />
-                    <span>Email de alerta enviado ao dono</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+      {/* ========================================================================= */}
+      {/* 1. SIDEBAR (MENU LATERAL FIXO / MOBILE DRAWER)                             */}
+      {/* ========================================================================= */}
+      {/* Slide-over Backdrop (opens when 3 lines are clicked) */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
+        />
       )}
 
-      {/* MAIN CONTENT AREA */}
-      <main className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-        {/* ========================================================= */}
-        {/* TAB: RESUMO DO DIA                                        */}
-        {/* ========================================================= */}
-        {activeTab === 'resumo' && (
-          <div className="space-y-6">
-            {/* Top Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Data de Análise:</span>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl"
-                />
-                <button
-                  onClick={() => setSelectedDate(getTodayStr())}
-                  className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200"
-                >
-                  Hoje
-                </button>
+      {/* Menu Lateral de Páginas (Abre exclusivamente ao clicar nos 3 traços no canto superior direito) */}
+      <aside
+        className={`fixed top-0 right-0 z-50 h-screen w-72 sm:w-80 bg-neutral-900 border-l border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
+          isSidebarOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="p-4 sm:p-5 border-b border-neutral-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-neutral-950 font-serif-display font-normal text-xl flex items-center justify-center shrink-0 shadow-sm">
+              QP
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-serif-display text-lg text-white font-normal leading-tight truncate">
+                Qué Pasa
+              </h1>
+              <p className="font-sans font-normal text-[11px] text-neutral-400 truncate">
+                Menu de Páginas · Aveiro
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+            title="Fechar Menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Quick Action Button inside Menu */}
+        <div className="px-3 pt-3 pb-1">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingReservation(null);
+              setShowManualModal(true);
+              setIsSidebarOpen(false);
+            }}
+            className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Reserva</span>
+          </button>
+        </div>
+
+        {/* Navigation Items (Order explicitly requested) */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1 font-sans text-sm">
+          {/* 1. Dashboard */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('dashboard');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'dashboard'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span>Dashboard</span>
+            </div>
+          </button>
+
+          {/* 2. Reservas */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('reservas');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'reservas'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              <span>Reservas</span>
+            </div>
+            {reservations.length > 0 && (
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  activeSection === 'reservas'
+                    ? 'bg-neutral-950/20 text-neutral-950'
+                    : 'bg-neutral-800 text-neutral-300'
+                }`}
+              >
+                {reservations.length}
+              </span>
+            )}
+          </button>
+
+          {/* 3. Mesas e Ocupação */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('mesas');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'mesas'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Layers className="w-4 h-4 shrink-0" />
+              <span>Mesas e Ocupação</span>
+            </div>
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                activeSection === 'mesas'
+                  ? 'bg-neutral-950/20 text-neutral-950'
+                  : 'bg-neutral-800 text-neutral-300'
+              }`}
+            >
+              12
+            </span>
+          </button>
+
+          {/* 4. Clientes */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('clientes');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'clientes'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Users className="w-4 h-4 shrink-0" />
+              <span>Clientes</span>
+            </div>
+            {customers.length > 0 && (
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  activeSection === 'clientes'
+                    ? 'bg-neutral-950/20 text-neutral-950'
+                    : 'bg-neutral-800 text-neutral-300'
+                }`}
+              >
+                {customers.length}
+              </span>
+            )}
+          </button>
+
+          {/* 5. Estatísticas e Relatórios */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('estatisticas');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'estatisticas'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-4 h-4 shrink-0" />
+              <span>Estatísticas e Relatórios</span>
+            </div>
+          </button>
+
+          {/* 6. Notificações */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('notificacoes');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'notificacoes'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="w-4 h-4 shrink-0" />
+              <span>Notificações</span>
+            </div>
+            {unreadNotificationsCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 text-[10px] font-bold flex items-center justify-center tabular-nums">
+                {unreadNotificationsCount}
+              </span>
+            )}
+          </button>
+
+          {/* 7. Configurações */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('configuracoes');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+              activeSection === 'configuracoes'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <SettingsIcon className="w-4 h-4 shrink-0" />
+              <span>Configurações</span>
+            </div>
+          </button>
+        </nav>
+
+        {/* Sidebar Footer: Theme Toggle & Admin Profile */}
+        <div className="p-4 border-t border-neutral-800 bg-neutral-900/60 space-y-3">
+          <div className="flex items-center justify-between text-xs text-neutral-400">
+            <span className="font-sans">Modo de Exibição</span>
+            <button
+              type="button"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-1.5 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-400" />}
+              <span className="text-[11px]">{isDarkMode ? 'Escuro' : 'Claro'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-1 border-t border-neutral-800/80">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-amber-400 shrink-0">
+                GA
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowManualModal(true)}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Nova Reserva Manual</span>
-                </button>
-
-                <button
-                  onClick={() => setShowBlockModal(true)}
-                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/20 font-bold rounded-xl text-xs flex items-center gap-1.5"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Bloquear Período</span>
-                </button>
+              <div className="min-w-0">
+                <span className="font-sans font-bold text-xs text-white block truncate">
+                  Gerência
+                </span>
+                <span className="font-sans font-normal text-[11px] text-neutral-400 block truncate">
+                  {user.username || 'dono@barbaazul.pt'}
+                </span>
               </div>
             </div>
 
-            {/* 4 Top KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reservas Hoje</span>
-                <div className="dashboard-estatistica-num text-amber-500">{daySummary.totalReservations}</div>
-                <span className="text-[11px] text-slate-400">Total de marcações</span>
-              </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="Terminar Sessão"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
 
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pessoas Esperadas</span>
-                <div className="dashboard-estatistica-num text-emerald-500">{daySummary.expectedGuests}</div>
-                <span className="text-[11px] text-slate-400">Total de clientes (pax)</span>
-              </div>
+      {/* ========================================================================= */}
+      {/* 2. MAIN CONTAINER (BARRA SUPERIOR + CONTEÚDO PRINCIPAL)                    */}
+      {/* ========================================================================= */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* BARRA SUPERIOR (TOP BAR) - APENAS DASHBOARD E OS 3 TRAÇOS */}
+        <header className="sticky top-0 z-30 bg-neutral-900/95 backdrop-blur-md border-b border-neutral-800 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-sm">
+          {/* Left: APENAS "Dashboard" */}
+          <h2 className="font-serif-display text-2xl sm:text-[28px] text-white font-normal leading-tight tracking-tight">
+            Dashboard
+          </h2>
 
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mesas Livres</span>
-                <div className="dashboard-estatistica-num text-sky-400">{daySummary.freeTables}</div>
-                <span className="text-[11px] text-slate-400">Disponíveis na sala</span>
-              </div>
-
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mesas Ocupadas</span>
-                <div className="dashboard-estatistica-num text-rose-500">{daySummary.occupiedTables}</div>
-                <span className="text-[11px] text-slate-400">Em serviço / reservadas</span>
-              </div>
+          {/* Right: APENAS os 3 traços para abrir o Menu de Páginas */}
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
+            className="p-2 sm:p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-amber-400 hover:text-amber-300 transition-all cursor-pointer border border-neutral-700 flex items-center justify-center shrink-0 shadow-sm"
+            title="Abrir Menu de Páginas"
+            aria-label="Abrir Menu de Páginas"
+          >
+            <div className="w-5 h-4 flex flex-col justify-between items-center py-0.5" aria-hidden="true">
+              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
+              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
+              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
             </div>
+          </button>
+        </header>
 
-            {/* Split: Floor Plan (Left) + Upcoming Arrivals (Right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="dashboard-seccao">
-                    Planta da Sala em Tempo Real ({selectedDate})
-                  </h3>
-                  <span className="text-xs text-slate-500">Toque em qualquer mesa para gerir estado</span>
+        {/* ========================================================================= */}
+        {/* 3. CONTEÚDO PRINCIPAL (RENDERIZADO PELA SECÇÃO SELECIONADA)                */}
+        {/* ========================================================================= */}
+        <main className="flex-1 p-3.5 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+          {/* ======================================================================= */}
+          {/* SECÇÃO: DASHBOARD PRINCIPAL                                             */}
+          {/* ======================================================================= */}
+          {activeSection === 'dashboard' && (
+            <div className="space-y-6">
+              {/* Date Filters Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-sans font-bold text-xs text-neutral-400 uppercase tracking-wider mr-1">
+                    Filtrar:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardDateFilter('hoje');
+                      setSelectedDate(getTodayStr());
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
+                      dashboardDateFilter === 'hoje'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardDateFilter('amanha');
+                      const d = new Date();
+                      d.setDate(d.getDate() + 1);
+                      setSelectedDate(d.toISOString().split('T')[0]);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
+                      dashboardDateFilter === 'amanha'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Amanhã
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDashboardDateFilter('personalizado')}
+                    className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
+                      dashboardDateFilter === 'personalizado'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Personalizado
+                  </button>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+                      setDashboardDateFilter('personalizado');
+                    }}
+                    className="px-3 py-1.5 text-xs font-sans font-medium tabular-nums bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowBlockModal(true)}
+                    className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-amber-400 border border-amber-500/20 font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    Bloquear Período
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Indicadores Principais (KPIs) */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* 1. Reservas de hoje */}
+                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                      Reservas de Hoje
+                    </span>
+                    <CalendarDays className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-white leading-none">
+                    {daySummary.totalReservations}
+                  </div>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Marcações agendadas para o dia
+                  </p>
+                </div>
+
+                {/* 2. Total de clientes esperados */}
+                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                      Clientes Esperados
+                    </span>
+                    <Users className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-emerald-400 leading-none">
+                    {daySummary.expectedGuests}
+                  </div>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Total de lugares ocupados hoje
+                  </p>
+                </div>
+
+                {/* 3. Reservas pendentes de confirmação */}
+                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                      Pendentes / A Confirmar
+                    </span>
+                    <Clock className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-sky-400 leading-none">
+                    {pendingReservationsCount}
+                  </div>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    A aguardar validação ou chegada
+                  </p>
+                </div>
+
+                {/* 4. Taxa de ocupação prevista */}
+                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                      Ocupação Prevista
+                    </span>
+                    <TrendingUp className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-purple-400 leading-none">
+                    {occupancyRate}%
+                  </div>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Capacidade total da sala nos 4 turnos
+                  </p>
+                </div>
+              </div>
+
+              {/* Área Principal & Área Secundária */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ÁREA PRINCIPAL: Próximas Reservas do Dia */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-sans font-bold text-lg text-white">
+                          Próximas Reservas ({selectedDate})
+                        </h3>
+                        <p className="font-sans font-normal text-xs text-neutral-400">
+                          Ordenadas por horário cronológico de chegada.
+                        </p>
+                      </div>
+                      <span className="font-sans font-bold text-xs uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300">
+                        {todayReservations.length} reservas
+                      </span>
+                    </div>
+
+                    {todayReservations.length === 0 ? (
+                      <div className="py-12 text-center text-neutral-500 font-sans text-sm">
+                        Não existem reservas agendadas para esta data.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {todayReservations.map((res) => (
+                          <div
+                            key={res.id}
+                            className="p-3.5 bg-neutral-800/60 hover:bg-neutral-800 rounded-2xl border border-neutral-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
+                          >
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-sans font-bold text-base text-white truncate">
+                                  {res.customerName}
+                                </span>
+                                {renderStatusBadge(res.status)}
+                              </div>
+                              <div className="font-sans font-medium text-xs text-neutral-400 flex items-center gap-2 tabular-nums">
+                                <span className="text-amber-400 font-bold">Mesa {res.tableId}</span>
+                                <span>•</span>
+                                <span>{res.time} ({res.durationMinutes}m)</span>
+                                <span>•</span>
+                                <span>{res.guests} pax</span>
+                                <span>•</span>
+                                <span>{res.customerPhone}</span>
+                              </div>
+                              {res.specialRequests.length > 0 && (
+                                <p className="text-xs text-amber-300/80 italic">
+                                  Pedidos: {res.specialRequests.join(', ')}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Ações Rápidas */}
+                            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                              {res.status === 'confirmada' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await updateOwnerReservation(res.id, { status: 'chegou' });
+                                    showToast('Chegada registada');
+                                    loadAll();
+                                  }}
+                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  title="Marcar Chegada"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                  <span>Chegou</span>
+                                </button>
+                              )}
+
+                              {res.status === 'chegou' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await updateOwnerReservation(res.id, { status: 'sentada' });
+                                    showToast('Mesa sentada');
+                                    loadAll();
+                                  }}
+                                  className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  title="Sentar Mesa"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Sentar</span>
+                                </button>
+                              )}
+
+                              {res.status === 'sentada' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await updateOwnerReservation(res.id, { status: 'concluida' });
+                                    showToast('Reserva finalizada');
+                                    loadAll();
+                                  }}
+                                  className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  title="Concluir"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Concluir</span>
+                                </button>
+                              )}
+
+                              {/* Editar */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingReservation(res);
+                                  setShowManualModal(true);
+                                }}
+                                className="p-2 rounded-xl bg-neutral-700/60 hover:bg-neutral-700 text-neutral-300 hover:text-white cursor-pointer"
+                                title="Editar Reserva"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Email Gmail */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenGmailConfirm(res)}
+                                className="p-2 rounded-xl bg-neutral-700/60 hover:bg-neutral-700 text-red-400 hover:text-red-300 cursor-pointer"
+                                title="Enviar Confirmação por Gmail"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Cancelar com Confirmação */}
+                              {res.status !== 'cancelada' && res.status !== 'concluida' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Tem a certeza que deseja cancelar a reserva de ${res.customerName}?`)) {
+                                      await updateOwnerReservation(res.id, { status: 'cancelada' });
+                                      showToast('Reserva cancelada');
+                                      loadAll();
+                                    }
+                                  }}
+                                  className="p-2 rounded-xl bg-neutral-700/60 hover:bg-rose-950 text-neutral-400 hover:text-rose-400 cursor-pointer"
+                                  title="Cancelar Reserva"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ÁREA SECUNDÁRIA: Distribuição por Horário & Alertas */}
+                <div className="space-y-4">
+                  {/* Distribuição por Turno */}
+                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4">
+                    <h3 className="font-sans font-bold text-base text-white">
+                      Distribuição por Horário ({selectedDate})
+                    </h3>
+
+                    <div className="space-y-3 font-sans">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-amber-400">Almoço · 12:30</span>
+                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.lunch1.count} / 12 mesas</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all"
+                            style={{ width: `${Math.min(100, (shiftDistribution.lunch1.count / 12) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-amber-400">Almoço · 14:00</span>
+                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.lunch2.count} / 12 mesas</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all"
+                            style={{ width: `${Math.min(100, (shiftDistribution.lunch2.count / 12) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-sky-400">Jantar · 19:30</span>
+                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.dinner1.count} / 12 mesas</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                          <div
+                            className="h-full bg-sky-500 rounded-full transition-all"
+                            style={{ width: `${Math.min(100, (shiftDistribution.dinner1.count / 12) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-sky-400">Jantar · 21:00</span>
+                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.dinner2.count} / 12 mesas</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                          <div
+                            className="h-full bg-sky-500 rounded-full transition-all"
+                            style={{ width: `${Math.min(100, (shiftDistribution.dinner2.count / 12) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estado da Ocupação do Restaurante */}
+                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                    <h3 className="font-sans font-bold text-base text-white">
+                      Ocupação das Mesas (12 Total)
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-sans">
+                      <div className="p-2.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60">
+                        <span className="text-neutral-400 block text-[11px]">Livres</span>
+                        <span className="font-bold text-lg text-emerald-400 tabular-nums">{daySummary.freeTables}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60">
+                        <span className="text-neutral-400 block text-[11px]">Ocupadas</span>
+                        <span className="font-bold text-lg text-rose-400 tabular-nums">{daySummary.occupiedTables}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alertas Importantes */}
+                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3 font-sans">
+                    <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <span>Alertas da Operação</span>
+                    </h3>
+
+                    <div className="space-y-2 text-xs">
+                      {pendingReservationsCount > 0 && (
+                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl">
+                          Existem <strong>{pendingReservationsCount}</strong> reservas a aguardar confirmação ou chegada hoje.
+                        </div>
+                      )}
+                      {blockedPeriods.length > 0 && (
+                        <div className="p-3 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded-xl">
+                          Existem <strong>{blockedPeriods.length}</strong> períodos ou mesas bloqueadas configurados.
+                        </div>
+                      )}
+                      <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                        <span>Webhook n8n ativo em cada reserva online.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================================= */}
+          {/* SECÇÃO: GESTÃO DE RESERVAS                                              */}
+          {/* ======================================================================= */}
+          {activeSection === 'reservas' && (
+            <div className="space-y-4">
+              {/* Toolbar & Filters */}
+              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3 font-sans">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                  {/* Search */}
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar por cliente, telemóvel, código ou mesa..."
+                      value={resSearchQuery}
+                      onChange={(e) => setResSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Actions: View Toggle + Export + New */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex rounded-xl bg-neutral-100 dark:bg-neutral-800 p-1 border border-neutral-200 dark:border-neutral-700">
+                      <button
+                        type="button"
+                        onClick={() => setReservationViewMode('tabela')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          reservationViewMode === 'tabela'
+                            ? 'bg-amber-500 text-neutral-950'
+                            : 'text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        Tabela
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReservationViewMode('turnos')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          reservationViewMode === 'turnos'
+                            ? 'bg-amber-500 text-neutral-950'
+                            : 'text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        Turnos
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={exportReservationsToCsv}
+                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                      title="Exportar para Excel / CSV"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Exportar CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {/* Date Filter */}
+                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Data:</span>
+                  <button
+                    type="button"
+                    onClick={() => setResDateFilter('todas')}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      resDateFilter === 'todas'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResDateFilter('hoje')}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      resDateFilter === 'hoje'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResDateFilter('amanha')}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      resDateFilter === 'amanha'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Amanhã
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResDateFilter('semana')}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      resDateFilter === 'semana'
+                        ? 'bg-amber-500 text-neutral-950'
+                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Esta Semana
+                  </button>
+
+                  <div className="h-4 w-[1px] bg-neutral-700 mx-1 hidden sm:block" />
+
+                  {/* Status Filter */}
+                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Estado:</span>
+                  <select
+                    value={resStatusFilter}
+                    onChange={(e) => setResStatusFilter(e.target.value)}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-200 font-medium text-xs"
+                  >
+                    <option value="todas">Todos os Estados</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="chegou">Chegou</option>
+                    <option value="sentada">Sentada</option>
+                    <option value="concluida">Concluída</option>
+                    <option value="cancelada">Cancelada</option>
+                    <option value="noshow">Falta de comparência (No-Show)</option>
+                  </select>
+
+                  {/* Pax Filter */}
+                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Pax:</span>
+                  <select
+                    value={resPaxFilter}
+                    onChange={(e) => setResPaxFilter(e.target.value)}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-200 font-medium text-xs"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="1-2">1-2 Pessoas</option>
+                    <option value="3-4">3-4 Pessoas</option>
+                    <option value="5+">5+ Pessoas</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* VISTA 1: TABELA (Desktop Table + Mobile Cards) */}
+              {reservationViewMode === 'tabela' && (
+                <>
+                  {/* Mobile Cards View (< 768px) */}
+                  <div className="md:hidden space-y-3 font-sans">
+                    {filteredReservations.length === 0 ? (
+                      <div className="text-center py-12 text-neutral-500 bg-neutral-900 rounded-2xl p-6">
+                        Nenhuma reserva encontrada com os filtros selecionados.
+                      </div>
+                    ) : (
+                      filteredReservations.map((res) => (
+                        <div
+                          key={`res-card-${res.id}`}
+                          className="p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-3 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-sans font-bold text-base text-white">{res.customerName}</div>
+                              <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                                {res.customerPhone}
+                              </div>
+                            </div>
+                            {renderStatusBadge(res.status)}
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-neutral-800/50 rounded-xl text-xs">
+                            <div>
+                              <span className="text-neutral-500 text-[11px] block">Mesa</span>
+                              <span className="font-sans font-bold text-amber-400">Mesa {res.tableId}</span>
+                            </div>
+                            <div>
+                              <span className="text-neutral-500 text-[11px] block">Data & Hora</span>
+                              <span className="font-sans font-medium tabular-nums text-white">
+                                {res.date} · {res.time}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-neutral-500 text-[11px] block">Pessoas</span>
+                              <span className="font-sans font-medium tabular-nums text-white">{res.guests} pax</span>
+                            </div>
+                          </div>
+
+                          {res.specialRequests.length > 0 && (
+                            <div className="text-xs text-neutral-300 bg-neutral-800/30 p-2 rounded-lg">
+                              <strong>Pedidos:</strong> {res.specialRequests.join(', ')}
+                            </div>
+                          )}
+
+                          {/* Mobile Action Buttons */}
+                          <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                            {res.status === 'confirmada' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await updateOwnerReservation(res.id, { status: 'chegou' });
+                                  showToast('Chegada registada');
+                                  loadAll();
+                                }}
+                                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Chegou</span>
+                              </button>
+                            )}
+
+                            {res.status === 'chegou' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await updateOwnerReservation(res.id, { status: 'sentada' });
+                                  showToast('Mesa sentada');
+                                  loadAll();
+                                }}
+                                className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Sentar</span>
+                              </button>
+                            )}
+
+                            {res.status === 'sentada' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await updateOwnerReservation(res.id, { status: 'concluida' });
+                                  showToast('Reserva concluída');
+                                  loadAll();
+                                }}
+                                className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Concluir</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingReservation(res);
+                                setShowManualModal(true);
+                              }}
+                              className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-sans font-bold text-xs rounded-xl border border-neutral-700 cursor-pointer"
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenGmailConfirm(res)}
+                              className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-red-400 font-sans font-bold text-xs rounded-xl border border-neutral-700 cursor-pointer"
+                            >
+                              Email
+                            </button>
+
+                            {res.status !== 'cancelada' && res.status !== 'concluida' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (confirm(`Deseja cancelar a reserva de ${res.customerName}?`)) {
+                                    await updateOwnerReservation(res.id, { status: 'cancelada' });
+                                    showToast('Reserva cancelada');
+                                    loadAll();
+                                  }
+                                }}
+                                className="py-2 px-2.5 bg-neutral-800 hover:bg-rose-950 text-neutral-400 hover:text-rose-400 rounded-xl cursor-pointer"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Table View (>= 768px) */}
+                  <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm font-sans">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left font-sans text-sm">
+                        <thead className="bg-neutral-50 dark:bg-neutral-800/70 border-b border-neutral-200 dark:border-neutral-800 font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                          <tr>
+                            <th className="px-4 py-3.5">Cliente</th>
+                            <th className="px-4 py-3.5">Data & Hora</th>
+                            <th className="px-4 py-3.5">Mesa</th>
+                            <th className="px-4 py-3.5">Pax</th>
+                            <th className="px-4 py-3.5">Estado</th>
+                            <th className="px-4 py-3.5">Observações</th>
+                            <th className="px-4 py-3.5 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 font-sans font-normal text-sm">
+                          {filteredReservations.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="text-center py-12 text-neutral-400">
+                                Nenhuma reserva encontrada.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredReservations.map((res) => (
+                              <tr key={res.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors">
+                                <td className="px-4 py-3.5">
+                                  <div className="font-sans font-bold text-white">{res.customerName}</div>
+                                  <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                                    {res.customerPhone}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3.5">
+                                  <div className="font-sans font-medium text-white tabular-nums">{res.date}</div>
+                                  <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                                    {res.time} ({res.durationMinutes}m)
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3.5 font-sans font-bold text-amber-500">
+                                  Mesa {res.tableId}
+                                </td>
+                                <td className="px-4 py-3.5 font-sans font-medium tabular-nums text-white">
+                                  {res.guests} pax
+                                </td>
+                                <td className="px-4 py-3.5">
+                                  {renderStatusBadge(res.status)}
+                                </td>
+                                <td className="px-4 py-3.5 max-w-xs truncate text-neutral-400 text-xs">
+                                  {res.specialRequests.join(', ') || res.internalNotes || '—'}
+                                </td>
+                                <td className="px-4 py-3.5 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {res.status === 'confirmada' && (
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          await updateOwnerReservation(res.id, { status: 'chegou' });
+                                          showToast('Chegada registada');
+                                          loadAll();
+                                        }}
+                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                      >
+                                        Chegou
+                                      </button>
+                                    )}
+
+                                    {res.status === 'chegou' && (
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          await updateOwnerReservation(res.id, { status: 'sentada' });
+                                          showToast('Mesa sentada');
+                                          loadAll();
+                                        }}
+                                        className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                      >
+                                        Sentar
+                                      </button>
+                                    )}
+
+                                    {res.status === 'sentada' && (
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          await updateOwnerReservation(res.id, { status: 'concluida' });
+                                          showToast('Mesa concluída');
+                                          loadAll();
+                                        }}
+                                        className="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                      >
+                                        Concluir
+                                      </button>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingReservation(res);
+                                        setShowManualModal(true);
+                                      }}
+                                      className="p-1.5 hover:bg-neutral-800 rounded-lg text-neutral-300 hover:text-white cursor-pointer"
+                                      title="Editar Reserva"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenGmailConfirm(res)}
+                                      className="p-1.5 hover:bg-neutral-800 rounded-lg text-red-400 cursor-pointer"
+                                      title="Enviar confirmação por Gmail"
+                                    >
+                                      <Mail className="w-4 h-4" />
+                                    </button>
+
+                                    {res.status !== 'cancelada' && (
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          if (confirm(`Deseja cancelar a reserva de ${res.customerName}?`)) {
+                                            await updateOwnerReservation(res.id, { status: 'cancelada' });
+                                            showToast('Reserva cancelada');
+                                            loadAll();
+                                          }
+                                        }}
+                                        className="p-1.5 hover:bg-neutral-800 rounded-lg text-neutral-500 hover:text-rose-400 cursor-pointer"
+                                        title="Cancelar reserva"
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* VISTA 2: CALENDÁRIO / TURNOS */}
+              {reservationViewMode === 'turnos' && (
+                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-5 font-sans">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-sans font-bold text-base text-white">
+                        Vista por Turnos ({selectedDate})
+                      </h3>
+                      <p className="font-sans font-normal text-xs text-neutral-400">
+                        Ocupação detalhada das mesas por turno de almoço e jantar.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {['12:30', '14:00', '19:30', '21:00'].map((slotTime) => {
+                      const slotRes = reservations.filter(
+                        (r) => r.date === selectedDate && r.time === slotTime && r.status !== 'cancelada'
+                      );
+                      const isLunch = slotTime.startsWith('12') || slotTime.startsWith('14');
+
+                      return (
+                        <div
+                          key={`slot-col-${slotTime}`}
+                          className="bg-neutral-800/60 rounded-2xl border border-neutral-700/60 p-4 space-y-3"
+                        >
+                          <div className="flex items-center justify-between pb-2 border-b border-neutral-700/60">
+                            <div>
+                              <span className={`font-bold text-xs uppercase px-2 py-0.5 rounded ${
+                                isLunch ? 'bg-amber-500/15 text-amber-400' : 'bg-sky-500/15 text-sky-400'
+                              }`}>
+                                {isLunch ? 'Almoço' : 'Jantar'}
+                              </span>
+                              <div className="font-bold text-lg text-white tabular-nums mt-1">{slotTime}</div>
+                            </div>
+                            <span className="font-bold text-xs text-neutral-400 tabular-nums">
+                              {slotRes.length} / 12 mesas
+                            </span>
+                          </div>
+
+                          {slotRes.length === 0 ? (
+                            <div className="py-8 text-center text-xs text-neutral-500">
+                              Nenhuma mesa reservada neste turno.
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {slotRes.map((r) => (
+                                <div
+                                  key={r.id}
+                                  className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-700/80 space-y-1 text-xs"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <strong className="text-white truncate">{r.customerName}</strong>
+                                    <span className="font-bold text-amber-400">Mesa {r.tableId}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-neutral-400">
+                                    <span>{r.guests} pax</span>
+                                    {renderStatusBadge(r.status)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================================= */}
+          {/* SECÇÃO: MESAS E OCUPAÇÃO                                                */}
+          {/* ======================================================================= */}
+          {activeSection === 'mesas' && (
+            <div className="space-y-4 font-sans">
+              {/* Date & Shift Filter */}
+              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-sans font-bold text-lg text-white">
+                    Planta da Sala & Gestão de Mesas
+                  </h3>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Toque numa mesa para alterar capacidade, ativar/desativar ou reatribuir reservas.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-3 py-2 text-sm font-sans font-medium tabular-nums bg-neutral-800 border border-neutral-700 rounded-xl text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Visual Floor Plan */}
+              <div className="bg-white dark:bg-neutral-900 p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">
                 <FloorPlanSVG
                   mode="management"
                   tables={tables}
@@ -683,748 +1805,517 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 />
               </div>
 
-              {/* Upcoming Arrivals */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[640px]">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-500" />
-                    <h3 className="dashboard-seccao">Próximas Chegadas</h3>
-                  </div>
-                  <span className="text-xs font-bold px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">
-                    {daySummary.upcomingArrivals.length}
-                  </span>
+              {/* Table Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {tables.map((t) => {
+                  const statusInfo = tableStatusMap[t.id];
+                  const status = statusInfo?.status || 'livre';
+                  const res = statusInfo?.currentReservation;
+
+                  return (
+                    <div
+                      key={`tbl-detail-${t.id}`}
+                      onClick={() => setSelectedTableForModal(t)}
+                      className="p-4 bg-white dark:bg-neutral-900 hover:bg-neutral-800/80 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-2 cursor-pointer transition-all active:scale-[0.98]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans font-bold text-base text-white">
+                          Mesa {t.number}
+                        </span>
+                        <span className="text-xs font-bold text-neutral-400 tabular-nums">
+                          {t.capacity} pax
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`font-sans font-bold text-[11px] uppercase tracking-wider px-2 py-0.5 rounded ${
+                            status === 'sentada'
+                              ? 'bg-rose-500/20 text-rose-400'
+                              : status === 'chegou'
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : status === 'reservada'
+                              ? 'bg-sky-500/20 text-sky-400'
+                              : status === 'a_limpar'
+                              ? 'bg-purple-500/20 text-purple-400'
+                              : status === 'bloqueada'
+                              ? 'bg-neutral-700 text-neutral-400'
+                              : 'bg-emerald-500/20 text-emerald-400'
+                          }`}
+                        >
+                          {status}
+                        </span>
+
+                        <span className="text-[11px] text-neutral-400 capitalize">
+                          {t.section}
+                        </span>
+                      </div>
+
+                      {res ? (
+                        <div className="pt-2 border-t border-neutral-800 text-xs text-neutral-300">
+                          <strong className="block truncate">{res.customerName}</strong>
+                          <span className="text-neutral-400 tabular-nums">{res.time} · {res.guests} pax</span>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-neutral-800 text-[11px] text-neutral-500 italic">
+                          Mesa disponível
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================================= */}
+          {/* SECÇÃO: CLIENTES                                                        */}
+          {/* ======================================================================= */}
+          {activeSection === 'clientes' && (
+            <div className="space-y-4 font-sans">
+              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar por nome, telemóvel ou email..."
+                    value={customerSearchQuery}
+                    onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none"
+                  />
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 pt-2 space-y-2 pr-1">
-                  {daySummary.upcomingArrivals.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400 text-xs">
-                      Sem chegadas previstas para esta data.
-                    </div>
-                  ) : (
-                    daySummary.upcomingArrivals.map((res) => (
-                      <div key={res.id} className="pt-2 pb-2 space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
-                            {res.time}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              res.status === 'sentada'
-                                ? 'bg-red-500/20 text-red-400'
-                                : res.status === 'chegou'
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : res.status === 'concluida'
-                                ? 'bg-purple-500/20 text-purple-400'
-                                : 'bg-blue-500/20 text-blue-400'
-                            }`}
-                          >
-                            {res.status}
-                          </span>
-                        </div>
+                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                  Total: {filteredCustomers.length} Clientes Registados
+                </div>
+              </div>
 
-                        <div className="flex justify-between items-baseline">
-                          <strong className="text-slate-800 dark:text-slate-200">{res.customerName}</strong>
-                          <span className="font-semibold text-amber-500">Mesa {res.tableId}</span>
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredCustomers.length === 0 ? (
+                  <div className="col-span-full py-12 text-center text-neutral-500 bg-neutral-900 rounded-2xl">
+                    Nenhum cliente encontrado.
+                  </div>
+                ) : (
+                  filteredCustomers.map((cust) => {
+                    const custRes = reservations.filter(
+                      (r) => r.customerPhone === cust.phone || r.customerName === cust.name
+                    );
 
-                        <div className="text-slate-500 flex justify-between">
-                          <span>{res.guests} pessoas · {res.customerPhone}</span>
-                          <span className="text-[10px] font-mono">{res.code}</span>
-                        </div>
-
-                        {res.specialRequests.length > 0 && (
-                          <div className="text-[11px] text-amber-400/90 font-medium bg-amber-500/10 px-2 py-0.5 rounded">
-                            {res.specialRequests.join(' · ')}
+                    return (
+                      <div
+                        key={cust.id}
+                        className="p-5 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-3 shadow-sm flex flex-col justify-between"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-sans font-bold text-base text-white truncate">
+                              {cust.name}
+                            </span>
+                            <span className="font-sans font-bold text-xs uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 tabular-nums">
+                              {cust.visitsCount} {cust.visitsCount === 1 ? 'visita' : 'visitas'}
+                            </span>
                           </div>
-                        )}
 
-                        {/* Quick action buttons */}
-                        <div className="flex gap-1.5 pt-1">
-                          {res.status === 'confirmada' && (
-                            <button
-                              onClick={async () => {
-                                await updateOwnerReservation(res.id, { status: 'chegou' });
-                                showToast(`Cliente ${res.customerName} marcado como Chegou!`);
-                                loadAll();
-                              }}
-                              className="px-2 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-[11px] flex-1 text-center"
-                            >
-                              Chegou
-                            </button>
+                          <div className="text-xs text-neutral-400 space-y-0.5 tabular-nums">
+                            <div>📞 {cust.phone}</div>
+                            {cust.email && <div className="truncate">✉️ {cust.email}</div>}
+                            {cust.lastVisit && <div>📅 Última visita: {cust.lastVisit}</div>}
+                          </div>
+
+                          {cust.allergies && cust.allergies.length > 0 && (
+                            <div className="text-xs text-amber-300/90 pt-1">
+                              <strong>Alergias / Pedidos:</strong> {cust.allergies.join(', ')}
+                            </div>
                           )}
-                          {(res.status === 'confirmada' || res.status === 'chegou') && (
-                            <button
-                              onClick={async () => {
-                                await updateOwnerReservation(res.id, { status: 'sentada' });
-                                showToast(`Cliente ${res.customerName} sentou na Mesa ${res.tableId}`);
-                                loadAll();
-                              }}
-                              className="px-2 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[11px] flex-1 text-center"
-                            >
-                              Sentar
-                            </button>
+
+                          {cust.internalNotes && (
+                            <div className="text-xs text-neutral-400 bg-neutral-800/40 p-2 rounded-lg italic">
+                              "{cust.internalNotes}"
+                            </div>
                           )}
-                          {res.status === 'sentada' && (
-                            <button
-                              onClick={async () => {
-                                await updateOwnerReservation(res.id, { status: 'concluida' });
-                                showToast(`Mesa ${res.tableId} concluída! SMS e Email de agradecimento enviados.`);
+
+                          {/* Mini History */}
+                          <div className="pt-2 text-xs text-neutral-400">
+                            <strong>Histórico ({custRes.length}):</strong>
+                            <div className="mt-1 space-y-1">
+                              {custRes.slice(0, 3).map((r) => (
+                                <div key={r.id} className="text-[11px] text-neutral-400 flex justify-between">
+                                  <span>{r.date} às {r.time}</span>
+                                  <span className="capitalize text-neutral-300">{r.status}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* RGPD Compliance Action */}
+                        <div className="pt-3 border-t border-neutral-800 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm(`Tem a certeza que deseja anonimizar e apagar todos os dados de ${cust.name}? Esta ação cumpre o RGPD e é irreversível.`)) {
+                                await gdprDeleteOwnerCustomer(cust.phone);
+                                showToast('Dados anonimizados e apagados com sucesso');
                                 loadAll();
-                              }}
-                              className="px-2 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-[11px] flex-1 text-center cursor-pointer"
-                            >
-                              Concluir (SMS + Mail)
-                            </button>
-                          )}
+                              }
+                            }}
+                            className="text-xs text-neutral-500 hover:text-rose-400 flex items-center gap-1 cursor-pointer transition-colors"
+                            title="Direito ao Esquecimento RGPD"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Eliminar RGPD</span>
+                          </button>
                         </div>
                       </div>
-                    ))
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================================= */}
+          {/* SECÇÃO: ESTATÍSTICAS E RELATÓRIOS                                       */}
+          {/* ======================================================================= */}
+          {activeSection === 'estatisticas' && (
+            <div className="space-y-6 font-sans">
+              {/* Period Selector */}
+              <div className="flex items-center justify-between bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800">
+                <div>
+                  <h3 className="font-sans font-bold text-base text-white">Relatório de Performance</h3>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Métricas reais calculadas a partir da base de dados do restaurante.
+                  </p>
+                </div>
+                <div className="flex gap-1 bg-neutral-800 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod('7dias')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      statsPeriod === '7dias' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    7 Dias
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod('30dias')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      statsPeriod === '30dias' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    30 Dias
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod('tudo')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      statsPeriod === 'tudo' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    Tudo
+                  </button>
+                </div>
+              </div>
+
+              {/* 6 Key Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Reservas</span>
+                  <div className="font-bold text-2xl text-white tabular-nums">{statsData.total}</div>
+                </div>
+
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Clientes</span>
+                  <div className="font-bold text-2xl text-emerald-400 tabular-nums">{statsData.totalGuests}</div>
+                </div>
+
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Média Pax</span>
+                  <div className="font-bold text-2xl text-sky-400 tabular-nums">{statsData.avgGuests}</div>
+                </div>
+
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Cancelamentos</span>
+                  <div className="font-bold text-2xl text-rose-400 tabular-nums">{statsData.cancelRate}%</div>
+                </div>
+
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">No-Show</span>
+                  <div className="font-bold text-2xl text-purple-400 tabular-nums">{statsData.noShowRate}%</div>
+                </div>
+
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Recorrentes</span>
+                  <div className="font-bold text-2xl text-amber-400 tabular-nums">{statsData.recurringRate}%</div>
+                </div>
+              </div>
+
+              {/* Graphical Analysis */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-3xl space-y-4">
+                  <h4 className="font-bold text-sm text-white">Distribuição por Serviço</h4>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span>Almoço (12:30 e 14:00)</span>
+                        <span className="font-bold tabular-nums">{statsData.lunchCount} reservas</span>
+                      </div>
+                      <div className="w-full h-3 rounded-full bg-neutral-800 overflow-hidden">
+                        <div
+                          className="h-full bg-amber-500 rounded-full"
+                          style={{
+                            width: statsData.total ? `${(statsData.lunchCount / statsData.total) * 100}%` : '0%'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span>Jantar (19:30 e 21:00)</span>
+                        <span className="font-bold tabular-nums">{statsData.dinnerCount} reservas</span>
+                      </div>
+                      <div className="w-full h-3 rounded-full bg-neutral-800 overflow-hidden">
+                        <div
+                          className="h-full bg-sky-500 rounded-full"
+                          style={{
+                            width: statsData.total ? `${(statsData.dinnerCount / statsData.total) * 100}%` : '0%'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-3xl space-y-4">
+                  <h4 className="font-bold text-sm text-white">Retenção de Clientes</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    <strong>{statsData.recurringRate}%</strong> dos clientes cadastrados já visitaram o Qué Pasa mais de uma vez.
+                  </p>
+                  <div className="p-3.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60 text-xs text-neutral-300">
+                    Acompanhamento de preferências alimentares e notas internas registadas para proporcionar um atendimento personalizado.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================================= */}
+          {/* SECÇÃO: NOTIFICAÇÕES                                                    */}
+          {/* ======================================================================= */}
+          {activeSection === 'notificacoes' && (
+            <div className="space-y-4 font-sans">
+              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-sans font-bold text-lg text-white">Central de Notificações</h3>
+                  <p className="font-sans font-normal text-xs text-neutral-400">
+                    Alertas em tempo real sobre novas reservas, alterações de estado e mensagens.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!pushEnabled && (
+                    <button
+                      type="button"
+                      onClick={handleRequestPush}
+                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-amber-400 rounded-xl text-xs font-bold border border-amber-500/20 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>Ativar no Telemóvel</span>
+                    </button>
+                  )}
+                  {unreadNotificationsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => markOwnerNotificationsRead()}
+                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-xl text-xs font-bold cursor-pointer"
+                    >
+                      Marcar Todas como Lidas
+                    </button>
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* ========================================================= */}
-        {/* TAB: PLANTA EM TEMPO REAL                                */}
-        {/* ========================================================= */}
-        {activeTab === 'dia' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800">
-              <div>
-                <h3 className="dashboard-seccao">
-                  Planta da Sala em Tempo Real
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Estado ao vivo das 12 mesas circulares. Toque numa mesa para ações imediatas.
-                </p>
-              </div>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-2 text-xs font-bold bg-slate-800 border border-slate-700 rounded-xl"
-              />
-            </div>
-
-            <FloorPlanSVG
-              mode="management"
-              tables={tables}
-              tableStatusMap={tableStatusMap}
-              onTableActionClick={(tbl) => setSelectedTableForModal(tbl)}
-            />
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: RESERVAS & AÇÕES                                    */}
-        {/* ========================================================= */}
-        {activeTab === 'reservas' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar por nome, telefone ou código..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl w-64"
-                  />
-                </div>
-
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl"
-                >
-                  <option value="todas">Todos os Estados</option>
-                  <option value="confirmada">Confirmada</option>
-                  <option value="chegou">Chegou</option>
-                  <option value="sentada">Sentada</option>
-                  <option value="concluida">Concluída</option>
-                  <option value="cancelada">Cancelada</option>
-                  <option value="noshow">No-Show</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={exportReservationsToCsv}
-                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Exportar CSV</span>
-                </button>
-                <button
-                  onClick={() => setShowManualModal(true)}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Nova Reserva Manual</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left dashboard-tabela-corpo">
-                  <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 dashboard-tabela-header text-slate-400">
-                    <tr>
-                      <th className="px-4 py-3">Código</th>
-                      <th className="px-4 py-3">Data e Hora</th>
-                      <th className="px-4 py-3">Mesa</th>
-                      <th className="px-4 py-3">Cliente</th>
-                      <th className="px-4 py-3">Pax</th>
-                      <th className="px-4 py-3">Pedidos / Notas</th>
-                      <th className="px-4 py-3">Estado</th>
-                      <th className="px-4 py-3 text-right">Ações Rápidas</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredReservations.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="text-center py-12 text-slate-400">
-                          Nenhuma reserva encontrada.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredReservations.map((res) => (
-                        <tr key={res.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                          <td className="px-4 py-3 font-mono font-bold text-sky-400">{res.code}</td>
-                          <td className="px-4 py-3">
-                            <div className="font-semibold dashboard-hora-num">{res.date}</div>
-                            <div className="text-slate-400 dashboard-hora-num">{res.time} ({res.durationMinutes}m)</div>
-                          </td>
-                          <td className="px-4 py-3 font-bold text-amber-500">Mesa {res.tableId}</td>
-                          <td className="px-4 py-3">
-                            <div className="font-semibold text-white">{res.customerName}</div>
-                            <div className="text-slate-400">{res.customerPhone}</div>
-                            <div className="flex items-center gap-1.5 mt-1 text-[10px]">
-                              <span
-                                onClick={() => {
-                                  setSelectedReservationForSms(res);
-                                  setShowSmsModal(true);
-                                }}
-                                className={`px-1.5 py-0.5 rounded flex items-center gap-1 font-semibold cursor-pointer ${
-                                  res.smsSent ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-800 text-slate-500'
-                                }`}
-                                title={res.smsSent ? 'SMS entregue ao cliente. Clique para ver.' : 'SMS não enviado'}
-                              >
-                                <Smartphone className="w-2.5 h-2.5" /> SMS
-                              </span>
-                              <span
-                                className={`px-1.5 py-0.5 rounded flex items-center gap-1 font-semibold ${
-                                  res.emailSent ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'bg-slate-800 text-slate-500'
-                                }`}
-                                title={res.emailSent ? 'Email de confirmação enviado' : 'Email não enviado'}
-                              >
-                                <Mail className="w-2.5 h-2.5" /> Email
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 font-semibold dashboard-hora-num">{res.guests} pax</td>
-                          <td className="px-4 py-3 max-w-xs truncate text-slate-400">
-                            {res.specialRequests.join(', ') || 'Nenhum'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] dashboard-badge ${
-                                res.status === 'sentada'
-                                  ? 'bg-red-500/20 text-red-400'
-                                  : res.status === 'chegou'
-                                  ? 'bg-amber-500/20 text-amber-400'
-                                  : res.status === 'confirmada'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
-                                  : res.status === 'cancelada'
-                                  ? 'bg-rose-500/20 text-rose-400'
-                                  : res.status === 'noshow'
-                                  ? 'bg-slate-500/20 text-slate-400'
-                                  : 'bg-purple-500/20 text-purple-400'
-                              }`}
-                            >
-                              {res.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {res.status === 'confirmada' && (
-                                <button
-                                  onClick={async () => {
-                                    await updateOwnerReservation(res.id, { status: 'chegou' });
-                                    showToast('Chegada marcada');
-                                    loadAll();
-                                  }}
-                                  className="p-1 hover:bg-slate-700 rounded text-amber-400"
-                                  title="Marcar Chegada"
-                                >
-                                  <UserCheck className="w-4 h-4" />
-                                </button>
-                              )}
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    await sendOwnerReminder(res.id);
-                                    showToast(`Lembrete SMS enviado para ${res.customerPhone}`);
-                                    loadAll();
-                                  } catch (err: any) {
-                                    showToast(err.message || 'Erro ao enviar lembrete');
-                                  }
-                                }}
-                                className="p-1 hover:bg-slate-700 rounded text-amber-400 cursor-pointer"
-                                title="Disparar Lembrete Automático por SMS (Twilio)"
-                              >
-                                <Clock className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleOpenGmailConfirm(res)}
-                                className="p-1 hover:bg-slate-700 rounded text-red-400 cursor-pointer"
-                                title="Enviar Aviso de Reserva através do Gmail"
-                              >
-                                <Mail className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedReservationForSms(res);
-                                  setShowSmsModal(true);
-                                }}
-                                className="p-1 hover:bg-slate-700 rounded text-emerald-400 cursor-pointer"
-                                title="Ver / Reenviar SMS"
-                              >
-                                <Smartphone className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  await updateOwnerReservation(res.id, {
-                                    status: res.status === 'cancelada' ? 'confirmada' : 'cancelada',
-                                  });
-                                  showToast('Estado atualizado');
-                                  loadAll();
-                                }}
-                                className="p-1 hover:bg-slate-700 rounded text-rose-400 cursor-pointer"
-                                title="Cancelar / Reativar"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: BLOQUEIOS (FOLGAS, EVENTOS PRIVADOS, MESAS)          */}
-        {/* ========================================================= */}
-        {activeTab === 'bloqueios' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="dashboard-seccao text-white">Bloqueios & Encerramentos</h3>
-                <p className="text-xs text-slate-400">
-                  Bloqueie dias completos (folgas, feriados), intervalos de horas ou mesas específicas para eventos privados.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowBlockModal(true)}
-                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 dashboard-botao rounded-xl flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Bloqueio</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {blockedPeriods.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-slate-500 text-xs">
-                  Não existem bloqueios ativos no momento.
-                </div>
-              ) : (
-                blockedPeriods.map((block) => (
-                  <div
-                    key={block.id}
-                    className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2 relative"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold text-[10px] uppercase">
-                        {block.type === 'dia_inteiro' ? 'Dia Inteiro' : block.type === 'horario' ? 'Horário' : `Mesa ${block.tableId}`}
-                      </span>
-                      <button
-                        onClick={async () => {
-                          await deleteOwnerBlock(block.id);
-                          showToast('Bloqueio removido com sucesso!');
-                          loadAll();
-                        }}
-                        className="text-slate-500 hover:text-rose-400"
-                        title="Remover Bloqueio"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="font-bold text-white text-sm">{block.date}</div>
-                    {block.startTime && block.endTime && (
-                      <div className="text-xs text-slate-400">
-                        {block.startTime} às {block.endTime}
-                      </div>
-                    )}
-                    <p className="text-xs text-slate-300 font-medium">Motivo: {block.reason}</p>
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden shadow-sm">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-12 text-neutral-500 text-sm">
+                    Sem notificações no histórico.
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: EDITOR DA PLANTA                                    */}
-        {/* ========================================================= */}
-        {activeTab === 'editor' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="dashboard-seccao text-white">
-                  Editor de Disposição das 12 Mesas
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Arraste diretamente as mesas com o dedo ou rato para posicionar na sala de Aveiro.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    await saveOwnerTablesLayout(tables);
-                    showToast('Disposição da sala guardada com sucesso!');
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white dashboard-botao rounded-xl"
-                >
-                  Guardar Layout
-                </button>
-                <button
-                  onClick={async () => {
-                    await resetOwnerDemo();
-                    showToast('Layout original reposto.');
-                    loadAll();
-                  }}
-                  className="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl dashboard-botao"
-                >
-                  Restaurar Original
-                </button>
-              </div>
-            </div>
-
-            <FloorPlanSVG
-              mode="management"
-              tables={tables}
-              isDraggable={true}
-              onUpdateTablePosition={handleUpdateTablePosition}
-              onTableActionClick={(tbl) => setSelectedTableForModal(tbl)}
-            />
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: BASE DE CLIENTES (CRM)                              */}
-        {/* ========================================================= */}
-        {activeTab === 'clientes' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="dashboard-seccao text-white">Base de Clientes (CRM)</h3>
-                <p className="text-xs text-slate-400">
-                  Histórico de visitas, preferências e conformidade com o RGPD (Direito ao Apagamento).
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <table className="w-full text-left dashboard-tabela-corpo">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 dashboard-tabela-header text-slate-400">
-                  <tr>
-                    <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">Contactos</th>
-                    <th className="px-4 py-3">Visitas</th>
-                    <th className="px-4 py-3">No-Shows</th>
-                    <th className="px-4 py-3">Alergias / Notas</th>
-                    <th className="px-4 py-3">VIP</th>
-                    <th className="px-4 py-3 text-right">RGPD (Apagar)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {customers.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-800/40">
-                      <td className="px-4 py-3 font-semibold text-white">{c.name}</td>
-                      <td className="px-4 py-3 text-slate-400">
-                        <div>{c.phone}</div>
-                        <div>{c.email}</div>
-                      </td>
-                      <td className="px-4 py-3 font-bold text-white dashboard-hora-num">{c.visitsCount}</td>
-                      <td className="px-4 py-3">
-                        <span className={`dashboard-hora-num ${c.noShowCount > 0 ? 'text-rose-400 font-bold' : 'text-slate-500'}`}>
-                          {c.noShowCount}
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-4 flex items-start justify-between gap-3 transition-colors ${
+                        !n.isRead ? 'bg-amber-500/5' : ''
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-white">{n.title}</span>
+                          {!n.isRead && (
+                            <span className="w-2 h-2 rounded-full bg-amber-500" />
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-300 leading-relaxed">{n.message}</p>
+                        <span className="text-[11px] text-neutral-500 tabular-nums">
+                          {new Date(n.createdAt).toLocaleString('pt-PT')}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 max-w-xs">
-                        {c.allergies.length > 0 && (
-                          <div className="text-rose-400 font-semibold mb-0.5">{c.allergies.join(', ')}</div>
-                        )}
-                        <div className="text-slate-400 truncate">{c.internalNotes || '—'}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={async () => {
-                            await updateOwnerCustomer(c.id, { isVip: !c.isVip });
-                            showToast(c.isVip ? 'Removido de VIP' : 'Marcado como VIP');
-                            loadAll();
-                          }}
-                          className={`p-1.5 rounded-lg ${c.isVip ? 'text-amber-400 bg-amber-500/10' : 'text-slate-500 hover:text-amber-400'}`}
-                        >
-                          <Star className="w-4 h-4 fill-current" />
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={async () => {
-                            if (window.confirm(`Apagar permanentemente todos os dados de ${c.name} (RGPD)?`)) {
-                              await gdprDeleteOwnerCustomer(c.id);
-                              showToast('Dados anonimizados com sucesso.');
-                              loadAll();
-                            }
-                          }}
-                          className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-semibold"
-                        >
-                          Apagar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: RELATÓRIOS                                          */}
-        {/* ========================================================= */}
-        {activeTab === 'relatorios' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Total Reservas</span>
-                <div className="dashboard-estatistica-num text-amber-500">{reportStats.totalRes}</div>
-              </div>
-              <div className="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Total Pax</span>
-                <div className="dashboard-estatistica-num text-emerald-500">{reportStats.totalPax}</div>
-              </div>
-              <div className="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Taxa No-Show</span>
-                <div className="dashboard-estatistica-num text-rose-500">{reportStats.noShowRate}%</div>
-              </div>
-              <div className="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Cancelamentos</span>
-                <div className="dashboard-estatistica-num text-sky-500">{reportStats.cancelRate}%</div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-3">
-              <h4 className="dashboard-seccao text-white">Exportação de Relatórios</h4>
-              <p className="text-xs text-slate-400">
-                Descarregue os registos completos das reservas em ficheiro CSV compatível com Excel e Google Sheets.
-              </p>
-              <button
-                onClick={exportReservationsToCsv}
-                className="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 dashboard-botao rounded-2xl flex items-center gap-2 shadow"
-              >
-                <Download className="w-4 h-4" />
-                <span>Descarregar Ficheiro CSV / Excel</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* TAB: CONFIGURAÇÕES                                       */}
-        {/* ========================================================= */}
-        {activeTab === 'configuracoes' && settings && (
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div>
-                <h3 className="dashboard-seccao text-white">Configurações do Restaurante</h3>
-                <p className="text-xs text-slate-400">
-                  Horários semanais, email de alerta do dono e tempos de limpeza.
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  await saveOwnerSettings(settings);
-                  showToast('Configurações guardadas!');
-                }}
-                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 dashboard-botao rounded-xl"
-              >
-                Guardar Configurações
-              </button>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Email do Dono para Alertas Instantâneos de Novas Reservas
-              </label>
-              <input
-                type="email"
-                value={settings.ownerEmail || 'dono@barbaazul.pt'}
-                onChange={(e) => setSettings({ ...settings, ownerEmail: e.target.value })}
-                className="w-full sm:w-96 p-2.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white"
-              />
-            </div>
-
-            {/* Brevo (Sendinblue) Integration Card */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-800/80 border border-slate-700 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-700">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-sm">
-                    BR
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="dashboard-seccao text-white">Integração Brevo (Sendinblue)</h4>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${settings.brevoApiKey ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-700 text-slate-300'}`}>
-                        {settings.brevoApiKey ? 'Conectado / Configurado' : 'Opcional / Desconectado'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400">
-                      Disparo profissional de emails transacionais e SMS de confirmação através da API da Brevo.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleTestBrevo}
-                  disabled={isTestingBrevo || !settings.brevoApiKey}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shadow-sm"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isTestingBrevo ? 'animate-spin' : ''}`} />
-                  <span>{isTestingBrevo ? 'A testar conexão...' : 'Testar Conexão Brevo'}</span>
-                </button>
-              </div>
-
-              {brevoTestResult && (
-                <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${brevoTestResult.success ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'}`}>
-                  {brevoTestResult.success ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />}
-                  <span>{brevoTestResult.message}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Chave Brevo (API v3 ou Chave SMTP)
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="xkeysib-... ou xsmtpsib-..."
-                    value={settings.brevoApiKey || ''}
-                    onChange={(e) => setSettings({ ...settings, brevoApiKey: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    Aceita Chave de API v3 (<code className="text-amber-400">xkeysib-...</code>) para Email e SMS ou Chave SMTP (<code className="text-amber-400">xsmtpsib-...</code>) para Email.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Email de Remetente (Verificado na Brevo)
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="reservas@quepasa.pt"
-                    value={settings.brevoSenderEmail || ''}
-                    onChange={(e) => setSettings({ ...settings, brevoSenderEmail: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    Deve corresponder a um domínio ou remetente verificado na Brevo
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Nome do Remetente
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Qué Pasa · Aveiro"
-                    value={settings.brevoSenderName || 'Qué Pasa · Aveiro'}
-                    onChange={(e) => setSettings({ ...settings, brevoSenderName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Remetente Alfanumérico SMS (Máx. 11 caracteres)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={11}
-                    placeholder="QuePasa"
-                    value={settings.brevoSmsSender || 'QuePasa'}
-                    onChange={(e) => setSettings({ ...settings, brevoSmsSender: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Horários Semanais</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {settings.schedule.map((day, idx) => (
-                  <div key={day.dayOfWeek} className="p-3 bg-slate-800/60 rounded-xl border border-slate-700 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <strong className="text-white">{day.dayName}</strong>
-                      <span className={day.isOpen ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                        {day.isOpen ? 'Aberto' : 'Encerrado'}
-                      </span>
-                    </div>
-                    {day.isOpen && (
-                      <div className="text-[11px] text-slate-400 flex justify-between">
-                        <span>Almoço: {day.lunchStart}–{day.lunchEnd}</span>
-                        <span>Jantar: {day.dinnerStart}–{day.dinnerEnd}</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
 
-      {/* Manual Reservation Modal */}
+          {/* ======================================================================= */}
+          {/* SECÇÃO: CONFIGURAÇÕES                                                   */}
+          {/* ======================================================================= */}
+          {activeSection === 'configuracoes' && settings && (
+            <div className="space-y-6 font-sans">
+              {/* Webhook n8n Integration Status */}
+              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                      <Zap className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-base text-white">Integração Webhook n8n</h4>
+                      <p className="text-xs text-neutral-400">
+                        Cada nova reserva dispara automaticamente um HTTP POST para o fluxo n8n.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTestWebhook}
+                    disabled={isTestingWebhook}
+                    className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-neutral-950 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isTestingWebhook ? 'animate-spin' : ''}`} />
+                    <span>{isTestingWebhook ? 'A testar...' : 'Disparar Webhook de Teste'}</span>
+                  </button>
+                </div>
+
+                <div className="p-3 bg-neutral-800/80 rounded-xl border border-neutral-700/80 font-mono text-xs text-neutral-300 break-all flex items-center justify-between gap-2">
+                  <span>{N8N_WEBHOOK_URL}</span>
+                  <span className="font-sans font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    Ativo
+                  </span>
+                </div>
+              </div>
+
+              {/* Restaurant Details Form */}
+              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
+                <h4 className="font-bold text-base text-white">Dados Oficiais do Restaurante</h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      Telefone Oficial
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.phone || '234 424 208'}
+                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      Email de Contacto
+                    </label>
+                    <input
+                      type="email"
+                      value={settings.email || 'dono@barbaazul.pt'}
+                      onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      Morada
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.address || 'Cais dos Mercantéis 14'}
+                      onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      Cidade
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.city || 'Aveiro'}
+                      onChange={(e) => setSettings({ ...settings, city: e.target.value })}
+                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await saveOwnerSettings(settings);
+                      showToast('Configurações guardadas com sucesso');
+                    }}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold text-sm rounded-xl cursor-pointer"
+                  >
+                    Guardar Informações
+                  </button>
+                </div>
+              </div>
+
+              {/* Horários e Turnos Fixos */}
+              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
+                <h4 className="font-bold text-base text-white">Horários e Turnos Operacionais</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 bg-neutral-800/60 rounded-xl border border-neutral-700/60 space-y-1">
+                    <strong className="text-amber-400 font-bold text-sm block">Almoço</strong>
+                    <p className="text-neutral-300">Turno 1: 12:30 | Turno 2: 14:00</p>
+                    <span className="text-[11px] text-neutral-500">Duração estimada: 90 minutos</span>
+                  </div>
+                  <div className="p-3.5 bg-neutral-800/60 rounded-xl border border-neutral-700/60 space-y-1">
+                    <strong className="text-sky-400 font-bold text-sm block">Jantar</strong>
+                    <p className="text-neutral-300">Turno 1: 19:30 | Turno 2: 21:00</p>
+                    <span className="text-[11px] text-neutral-500">Duração estimada: 90 minutos</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. MODAIS REUTILIZADOS & ATIVOS                                            */}
+      {/* ========================================================================= */}
+      {/* Modal de Criação / Edição de Reserva */}
       <ManualReservationModal
         isOpen={showManualModal}
-        onClose={() => setShowManualModal(false)}
+        onClose={() => {
+          setShowManualModal(false);
+          setEditingReservation(null);
+        }}
         tables={tables}
         defaultDate={selectedDate}
+        initialReservation={editingReservation}
         onSuccess={() => {
-          showToast('Reserva manual criada com sucesso!');
+          showToast(editingReservation ? 'Reserva atualizada com sucesso!' : 'Reserva criada com sucesso!');
           loadAll();
         }}
       />
 
-      {/* Block Period Modal */}
+      {/* Modal de Bloqueio de Período / Folga */}
       <BlockPeriodModal
         isOpen={showBlockModal}
         onClose={() => setShowBlockModal(false)}
@@ -1435,7 +2326,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
         }}
       />
 
-      {/* Table Detail & Actions Modal */}
+      {/* Modal de Ações da Mesa (Planta) */}
       <TableDetailModal
         isOpen={selectedTableForModal !== null}
         onClose={() => setSelectedTableForModal(null)}
@@ -1450,21 +2341,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
         isAdmin={true}
       />
 
-      {/* SMS Preview & Resend Modal */}
-      <SmsPreviewModal
-        isOpen={showSmsModal}
-        onClose={() => setShowSmsModal(false)}
-        reservation={selectedReservationForSms}
-        onResend={async () => {
-          if (!selectedReservationForSms) return;
-          const res = await resendOwnerSms(selectedReservationForSms.id);
-          setSelectedReservationForSms(res.reservation);
-          showToast('SMS reenviado com sucesso!');
-          loadAll();
-        }}
-      />
-
-      {/* Gmail Confirmation Modal */}
+      {/* Modal de Confirmação Gmail Oficial */}
       <GmailConfirmModal
         isOpen={showGmailModal}
         onClose={() => {

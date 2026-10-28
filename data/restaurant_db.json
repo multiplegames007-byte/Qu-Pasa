@@ -123,6 +123,39 @@
   ],
   "reservations": [
     {
+      "id": "res-1793224184085-7mci",
+      "code": "OQP-2718",
+      "date": "2026-10-30",
+      "time": "12:30",
+      "guests": 2,
+      "tableId": 1,
+      "customerName": "Teste n8n",
+      "customerPhone": "912345678",
+      "customerEmail": "teste@n8n.com",
+      "specialRequests": [],
+      "notes": "Teste de webhook",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-28T21:49:44.085Z",
+      "source": "online",
+      "smsSent": false,
+      "emailSent": true,
+      "emailSentAt": "2026-10-28T21:49:44.085Z",
+      "emailAddress": "teste@n8n.com",
+      "messagesHistory": [
+        {
+          "id": "email-1793224184084-u55t",
+          "type": "email",
+          "recipient": "teste@n8n.com",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Teste n8n,\n\nA sua mesa para 2 pessoas está confirmada para 2026-10-30 às 12:30.\nCódigo de reserva: OQP-2718.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-28T21:49:44.085Z",
+          "trigger": "confirmacao_reserva"
+        }
+      ]
+    },
+    {
       "id": "res-1793122407805-z64k",
       "code": "OQP-1239",
       "date": "2026-10-30",
@@ -529,6 +562,19 @@
       "internalNotes": "",
       "lastVisit": "2026-11-01",
       "gdprConsentDate": "2026-10-27T18:14:18.395Z"
+    },
+    {
+      "id": "cust-1793224184085",
+      "name": "Teste n8n",
+      "phone": "912345678",
+      "email": "teste@n8n.com",
+      "isVip": false,
+      "visitsCount": 1,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "Nota do cliente: Teste de webhook",
+      "lastVisit": "2026-10-30",
+      "gdprConsentDate": "2026-10-28T21:49:44.085Z"
     }
   ],
   "waitlist": [],
@@ -642,6 +688,16 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1793224184085",
+      "title": "Nova Reserva Recebida!",
+      "message": "Teste n8n reservou para 2 pessoas a 2026-10-30 às 12:30 (Mesa 1).",
+      "reservationId": "res-1793224184085-7mci",
+      "reservationCode": "OQP-2718",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-28T21:49:44.085Z"
+    },
     {
       "id": "notif-1793122407806",
       "title": "Nova Reserva Recebida!",

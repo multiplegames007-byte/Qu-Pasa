@@ -817,6 +817,79 @@ async function dispatchEmail(
   };
 }
 
+// ============================================================================
+// N8N WEBHOOK INTEGRATION (NOVA RESERVA)
+// ============================================================================
+const N8N_RESERVATION_WEBHOOK_URL = 'https://simaoramos.app.n8n.cloud/webhook/nova-reserva';
+
+async function sendReservationWebhook(reservation: Reservation): Promise<void> {
+  try {
+    console.log(`[N8N WEBHOOK] A disparar pedido POST para ${N8N_RESERVATION_WEBHOOK_URL} (Reserva: ${reservation.code || reservation.id})...`);
+
+    const payload = {
+      event: 'nova_reserva',
+      timestamp: new Date().toISOString(),
+      // Campos diretos para mapeamento simples nos nós da n8n
+      id: reservation.id,
+      codigo: reservation.code,
+      cliente: reservation.customerName,
+      nome: reservation.customerName,
+      telemovel: reservation.customerPhone,
+      telefone: reservation.customerPhone,
+      email: reservation.customerEmail,
+      data: reservation.date,
+      hora: reservation.time,
+      pessoas: reservation.guests,
+      pax: reservation.guests,
+      mesa: reservation.tableId,
+      pedidos_especiais: (reservation.specialRequests || []).join(', '),
+      observacoes: reservation.notes || '',
+      notas: reservation.notes || '',
+      notas_internas: reservation.internalNotes || '',
+      origem: reservation.source || 'online',
+      estado: reservation.status,
+      duracao_minutos: reservation.durationMinutes,
+      criado_em: reservation.createdAt,
+      // Objeto de reserva completo estruturado
+      reservation: {
+        id: reservation.id,
+        code: reservation.code,
+        date: reservation.date,
+        time: reservation.time,
+        guests: reservation.guests,
+        tableId: reservation.tableId,
+        customerName: reservation.customerName,
+        customerPhone: reservation.customerPhone,
+        customerEmail: reservation.customerEmail,
+        specialRequests: reservation.specialRequests,
+        notes: reservation.notes || '',
+        internalNotes: reservation.internalNotes || '',
+        status: reservation.status,
+        durationMinutes: reservation.durationMinutes,
+        source: reservation.source || 'online',
+        createdAt: reservation.createdAt,
+      },
+    };
+
+    const response = await fetch(N8N_RESERVATION_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'QuePasa-Reservas/1.0',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.warn(`[N8N WEBHOOK WARNING] Servidor n8n respondeu com status ${response.status}: ${response.statusText}`);
+    } else {
+      console.log(`[N8N WEBHOOK SUCCESS] Pedido POST entregue com sucesso à n8n (status ${response.status})!`);
+    }
+  } catch (err: any) {
+    console.error(`[N8N WEBHOOK ERROR] Erro no envio do webhook n8n:`, err?.message || err);
+  }
+}
+
 function getDuration(_guests: number, _settings: RestaurantSettings): number {
   return 90; // Fixed 90-minute shifts
 }
@@ -946,16 +1019,7 @@ app.get('/api/public/table-status', (req: Request, res: Response) => {
   const now = Date.now();
 
   state.tables.forEach((t) => {
-    let isFree = checkTableFree(t.id, date, time, duration, state, sessionId);
-
-    // Rule: if <= 2 people, cannot select table with capacity > 2
-    if (numGuests <= 2 && t.capacity > 2) {
-      isFree = false;
-    }
-    // Rule: if > 2 people, cannot select table with capacity < numGuests
-    if (numGuests > 2 && t.capacity < numGuests) {
-      isFree = false;
-    }
+    const isFree = t.isActive && checkTableFree(t.id, date, time, duration, state, sessionId);
 
     statusMap[t.id] = {
       isFree,
@@ -991,10 +1055,6 @@ app.get('/api/public/slots', (req: Request, res: Response) => {
   const checkSlotAvailable = (slotTime: string) => {
     return state.tables.some((t) => {
       if (!t.isActive) return false;
-      // Rule: if <= 2 people, cannot select table > 2
-      if (numGuests <= 2 && t.capacity > 2) return false;
-      // Rule: if > 2 people, cannot select table of 2
-      if (numGuests > 2 && t.capacity < numGuests) return false;
       return checkTableFree(t.id, date, slotTime, durationMin, state);
     });
   };
@@ -1144,6 +1204,11 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
   state.notifications.unshift(ownerNotif);
 
   saveDb(state);
+
+  // Disparar Webhook n8n (Nova Reserva)
+  sendReservationWebhook(newReservation).catch((err) => {
+    console.error('[N8N DISPATCH ERROR]', err);
+  });
 
   res.status(201).json({
     success: true,
@@ -1338,6 +1403,12 @@ app.post('/api/admin/reservations', requireOwnerAuth, async (req: Request, res: 
 
   state.reservations.unshift(newRes);
   saveDb(state);
+
+  // Disparar Webhook n8n (Nova Reserva Manual)
+  sendReservationWebhook(newRes).catch((err) => {
+    console.error('[N8N DISPATCH ERROR]', err);
+  });
+
   res.status(201).json(newRes);
 });
 
