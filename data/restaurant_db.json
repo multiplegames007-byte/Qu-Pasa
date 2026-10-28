@@ -123,6 +123,41 @@
   ],
   "reservations": [
     {
+      "id": "res-1793230719043-kyfj",
+      "code": "OQP-6352",
+      "date": "2026-10-29",
+      "time": "19:30",
+      "guests": 2,
+      "tableId": 5,
+      "customerName": "Manuel Silva",
+      "customerPhone": "+351 912 345 678",
+      "customerEmail": "manuel.silva@exemplo.pt",
+      "specialRequests": [
+        "Mesa tranquila"
+      ],
+      "notes": "Aniversário",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-28T23:38:39.043Z",
+      "source": "online",
+      "smsSent": false,
+      "emailSent": true,
+      "emailSentAt": "2026-10-28T23:38:39.043Z",
+      "emailAddress": "manuel.silva@exemplo.pt",
+      "messagesHistory": [
+        {
+          "id": "email-1793230719043-f7us",
+          "type": "email",
+          "recipient": "manuel.silva@exemplo.pt",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Manuel Silva,\n\nA sua mesa para 2 pessoas está confirmada para 2026-10-29 às 19:30.\nCódigo de reserva: OQP-6352.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-28T23:38:39.043Z",
+          "trigger": "confirmacao_reserva"
+        }
+      ]
+    },
+    {
       "id": "res-1793224184085-7mci",
       "code": "OQP-2718",
       "date": "2026-10-30",
@@ -504,11 +539,11 @@
       "phone": "+351 912 345 678",
       "email": "goncalo.ribeiro@exemplo.pt",
       "isVip": false,
-      "visitsCount": 7,
+      "visitsCount": 8,
       "noShowCount": 0,
       "allergies": [],
       "internalNotes": "Almoça habitualmente à sexta-feira.",
-      "lastVisit": "2026-11-02",
+      "lastVisit": "2026-10-29",
       "gdprConsentDate": "2026-03-01T10:20:00Z"
     },
     {
@@ -688,6 +723,16 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1793230719043",
+      "title": "Nova Reserva Recebida!",
+      "message": "Manuel Silva reservou para 2 pessoas a 2026-10-29 às 19:30 (Mesa 5).",
+      "reservationId": "res-1793230719043-kyfj",
+      "reservationCode": "OQP-6352",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-28T23:38:39.043Z"
+    },
     {
       "id": "notif-1793224184085",
       "title": "Nova Reserva Recebida!",
