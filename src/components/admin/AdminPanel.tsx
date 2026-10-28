@@ -12,8 +12,6 @@ import {
   Menu,
   X,
   LogOut,
-  Moon,
-  Sun,
   Download,
   Calendar,
   Clock,
@@ -90,7 +88,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   // Navigation & UI State
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Core Data States
@@ -512,44 +509,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     switch (status) {
       case 'sentada':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
             Sentada
           </span>
         );
       case 'chegou':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
             Chegou
           </span>
         );
       case 'confirmada':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
             Confirmada
           </span>
         );
       case 'concluida':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300">
             Concluída
           </span>
         );
       case 'cancelada':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-neutral-700/50 text-neutral-400 border border-neutral-600/50">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-300">
             Cancelada
           </span>
         );
       case 'noshow':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
             No-Show
           </span>
         );
       case 'pendente':
       default:
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">
+          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
             Pendente
           </span>
         );
@@ -568,7 +565,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-neutral-950 text-neutral-100' : 'bg-slate-50 text-neutral-900'} font-sans flex antialiased selection:bg-amber-500/30 selection:text-amber-200 transition-colors duration-200`}>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex antialiased selection:bg-amber-100 selection:text-amber-900">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 right-4 z-50 bg-amber-500 text-neutral-950 px-4 py-2.5 rounded-xl font-sans font-bold text-sm shadow-2xl flex items-center gap-2 animate-fade-in border border-amber-400">
@@ -584,27 +581,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       {isSidebarOpen && (
         <div
           onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs animate-fade-in"
         />
       )}
 
       {/* Menu Lateral de Páginas (Abre exclusivamente ao clicar nos 3 traços no canto superior direito) */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-screen w-72 sm:w-80 bg-neutral-900 border-l border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
+        className={`fixed top-0 right-0 z-50 h-screen w-72 sm:w-80 bg-white border-l border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
           isSidebarOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
         {/* Brand Header */}
-        <div className="p-4 sm:p-5 border-b border-neutral-800 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-neutral-950 font-serif-display font-normal text-xl flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-neutral-950 font-serif-display font-normal text-xl flex items-center justify-center shrink-0 shadow-xs">
               QP
             </div>
             <div className="min-w-0">
-              <h1 className="font-serif-display text-lg text-white font-normal leading-tight truncate">
+              <h1 className="font-serif-display text-lg text-slate-900 font-normal leading-tight truncate">
                 Qué Pasa
               </h1>
-              <p className="font-sans font-normal text-[11px] text-neutral-400 truncate">
+              <p className="font-sans font-normal text-[11px] text-slate-500 truncate">
                 Menu de Páginas · Aveiro
               </p>
             </div>
@@ -612,7 +609,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           <button
             type="button"
             onClick={() => setIsSidebarOpen(false)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
             title="Fechar Menu"
           >
             <X className="w-5 h-5" />
@@ -628,7 +625,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
               setShowManualModal(true);
               setIsSidebarOpen(false);
             }}
-            className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Reserva</span>
@@ -646,8 +643,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'dashboard'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -665,8 +662,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'reservas'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -678,7 +675,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
                   activeSection === 'reservas'
                     ? 'bg-neutral-950/20 text-neutral-950'
-                    : 'bg-neutral-800 text-neutral-300'
+                    : 'bg-slate-100 text-slate-700'
                 }`}
               >
                 {reservations.length}
@@ -695,8 +692,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'mesas'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -707,7 +704,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
               className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
                 activeSection === 'mesas'
                   ? 'bg-neutral-950/20 text-neutral-950'
-                  : 'bg-neutral-800 text-neutral-300'
+                  : 'bg-slate-100 text-slate-700'
               }`}
             >
               12
@@ -723,8 +720,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'clientes'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -736,7 +733,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
                   activeSection === 'clientes'
                     ? 'bg-neutral-950/20 text-neutral-950'
-                    : 'bg-neutral-800 text-neutral-300'
+                    : 'bg-slate-100 text-slate-700'
                 }`}
               >
                 {customers.length}
@@ -753,8 +750,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'estatisticas'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -772,8 +769,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'notificacoes'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -796,8 +793,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
               activeSection === 'configuracoes'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
-                : 'text-neutral-300 hover:text-white hover:bg-neutral-800/70'
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -807,30 +804,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           </button>
         </nav>
 
-        {/* Sidebar Footer: Theme Toggle & Admin Profile */}
-        <div className="p-4 border-t border-neutral-800 bg-neutral-900/60 space-y-3">
-          <div className="flex items-center justify-between text-xs text-neutral-400">
-            <span className="font-sans">Modo de Exibição</span>
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-1.5 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-400" />}
-              <span className="text-[11px]">{isDarkMode ? 'Escuro' : 'Claro'}</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between pt-1 border-t border-neutral-800/80">
+        {/* Sidebar Footer: Admin Profile (NO DARK MODE TOGGLE) */}
+        <div className="p-4 border-t border-slate-200 bg-slate-50/80">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-amber-400 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-xs font-bold text-amber-900 shrink-0">
                 GA
               </div>
               <div className="min-w-0">
-                <span className="font-sans font-bold text-xs text-white block truncate">
+                <span className="font-sans font-bold text-xs text-slate-900 block truncate">
                   Gerência
                 </span>
-                <span className="font-sans font-normal text-[11px] text-neutral-400 block truncate">
+                <span className="font-sans font-normal text-[11px] text-slate-500 block truncate">
                   {user.username || 'dono@barbaazul.pt'}
                 </span>
               </div>
@@ -839,7 +824,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={handleLogout}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
               title="Terminar Sessão"
             >
               <LogOut className="w-4 h-4" />
@@ -853,9 +838,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* BARRA SUPERIOR (TOP BAR) - APENAS DASHBOARD E OS 3 TRAÇOS */}
-        <header className="sticky top-0 z-30 bg-neutral-900/95 backdrop-blur-md border-b border-neutral-800 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-sm">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-xs">
           {/* Left: APENAS "Dashboard" */}
-          <h2 className="font-serif-display text-2xl sm:text-[28px] text-white font-normal leading-tight tracking-tight">
+          <h2 className="font-serif-display text-2xl sm:text-[28px] text-slate-900 font-normal leading-tight tracking-tight">
             Dashboard
           </h2>
 
@@ -863,14 +848,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           <button
             type="button"
             onClick={() => setIsSidebarOpen((prev) => !prev)}
-            className="p-2 sm:p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-amber-400 hover:text-amber-300 transition-all cursor-pointer border border-neutral-700 flex items-center justify-center shrink-0 shadow-sm"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all cursor-pointer border border-slate-200 flex items-center justify-center shrink-0 shadow-xs"
             title="Abrir Menu de Páginas"
             aria-label="Abrir Menu de Páginas"
           >
             <div className="w-5 h-4 flex flex-col justify-between items-center py-0.5" aria-hidden="true">
-              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
-              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
-              <span className="w-full h-0.5 bg-amber-400 rounded-full transition-all"></span>
+              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
             </div>
           </button>
         </header>
@@ -885,9 +870,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {activeSection === 'dashboard' && (
             <div className="space-y-6">
               {/* Date Filters Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-sans font-bold text-xs text-neutral-400 uppercase tracking-wider mr-1">
+                  <span className="font-sans font-bold text-xs text-slate-400 uppercase tracking-wider mr-1">
                     Filtrar:
                   </span>
                   <button
@@ -898,8 +883,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     }}
                     className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
                       dashboardDateFilter === 'hoje'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                     }`}
                   >
                     Hoje
@@ -914,8 +899,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     }}
                     className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
                       dashboardDateFilter === 'amanha'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                     }`}
                   >
                     Amanhã
@@ -925,8 +910,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     onClick={() => setDashboardDateFilter('personalizado')}
                     className={`px-3 py-1.5 rounded-xl font-sans font-bold text-xs transition-colors cursor-pointer ${
                       dashboardDateFilter === 'personalizado'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                     }`}
                   >
                     Personalizado
@@ -941,12 +926,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                       setSelectedDate(e.target.value);
                       setDashboardDateFilter('personalizado');
                     }}
-                    className="px-3 py-1.5 text-xs font-sans font-medium tabular-nums bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl"
+                    className="px-3 py-1.5 text-xs font-sans font-medium tabular-nums bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowBlockModal(true)}
-                    className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-amber-400 border border-amber-500/20 font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
                   >
                     Bloquear Período
                   </button>
@@ -956,65 +941,65 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
               {/* 4 Indicadores Principais (KPIs) */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* 1. Reservas de hoje */}
-                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
                       Reservas de Hoje
                     </span>
                     <CalendarDays className="w-4 h-4 text-amber-500" />
                   </div>
-                  <div className="font-sans font-bold text-[32px] tabular-nums text-white leading-none">
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-slate-900 leading-none">
                     {daySummary.totalReservations}
                   </div>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <p className="font-sans font-normal text-xs text-slate-400">
                     Marcações agendadas para o dia
                   </p>
                 </div>
 
                 {/* 2. Total de clientes esperados */}
-                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
                       Clientes Esperados
                     </span>
-                    <Users className="w-4 h-4 text-emerald-400" />
+                    <Users className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <div className="font-sans font-bold text-[32px] tabular-nums text-emerald-400 leading-none">
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-emerald-700 leading-none">
                     {daySummary.expectedGuests}
                   </div>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <p className="font-sans font-normal text-xs text-slate-400">
                     Total de lugares ocupados hoje
                   </p>
                 </div>
 
                 {/* 3. Reservas pendentes de confirmação */}
-                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
                       Pendentes / A Confirmar
                     </span>
-                    <Clock className="w-4 h-4 text-sky-400" />
+                    <Clock className="w-4 h-4 text-sky-600" />
                   </div>
-                  <div className="font-sans font-bold text-[32px] tabular-nums text-sky-400 leading-none">
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-sky-700 leading-none">
                     {pendingReservationsCount}
                   </div>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <p className="font-sans font-normal text-xs text-slate-400">
                     A aguardar validação ou chegada
                   </p>
                 </div>
 
                 {/* 4. Taxa de ocupação prevista */}
-                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-2 shadow-sm">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
                       Ocupação Prevista
                     </span>
-                    <TrendingUp className="w-4 h-4 text-purple-400" />
+                    <TrendingUp className="w-4 h-4 text-purple-600" />
                   </div>
-                  <div className="font-sans font-bold text-[32px] tabular-nums text-purple-400 leading-none">
+                  <div className="font-sans font-bold text-[32px] tabular-nums text-purple-700 leading-none">
                     {occupancyRate}%
                   </div>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <p className="font-sans font-normal text-xs text-slate-400">
                     Capacidade total da sala nos 4 turnos
                   </p>
                 </div>
@@ -1024,23 +1009,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* ÁREA PRINCIPAL: Próximas Reservas do Dia */}
                 <div className="lg:col-span-2 space-y-4">
-                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-sans font-bold text-lg text-white">
+                        <h3 className="font-sans font-bold text-lg text-slate-900">
                           Próximas Reservas ({selectedDate})
                         </h3>
-                        <p className="font-sans font-normal text-xs text-neutral-400">
+                        <p className="font-sans font-normal text-xs text-slate-500">
                           Ordenadas por horário cronológico de chegada.
                         </p>
                       </div>
-                      <span className="font-sans font-bold text-xs uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300">
+                      <span className="font-sans font-bold text-xs uppercase px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
                         {todayReservations.length} reservas
                       </span>
                     </div>
 
                     {todayReservations.length === 0 ? (
-                      <div className="py-12 text-center text-neutral-500 font-sans text-sm">
+                      <div className="py-12 text-center text-slate-400 font-sans text-sm">
                         Não existem reservas agendadas para esta data.
                       </div>
                     ) : (
@@ -1048,17 +1033,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                         {todayReservations.map((res) => (
                           <div
                             key={res.id}
-                            className="p-3.5 bg-neutral-800/60 hover:bg-neutral-800 rounded-2xl border border-neutral-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
+                            className="p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
                           >
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-sans font-bold text-base text-white truncate">
+                                <span className="font-sans font-bold text-base text-slate-900 truncate">
                                   {res.customerName}
                                 </span>
                                 {renderStatusBadge(res.status)}
                               </div>
-                              <div className="font-sans font-medium text-xs text-neutral-400 flex items-center gap-2 tabular-nums">
-                                <span className="text-amber-400 font-bold">Mesa {res.tableId}</span>
+                              <div className="font-sans font-medium text-xs text-slate-500 flex items-center gap-2 tabular-nums">
+                                <span className="text-amber-700 font-bold">Mesa {res.tableId}</span>
                                 <span>•</span>
                                 <span>{res.time} ({res.durationMinutes}m)</span>
                                 <span>•</span>
@@ -1067,7 +1052,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                 <span>{res.customerPhone}</span>
                               </div>
                               {res.specialRequests.length > 0 && (
-                                <p className="text-xs text-amber-300/80 italic">
+                                <p className="text-xs text-amber-800 italic">
                                   Pedidos: {res.specialRequests.join(', ')}
                                 </p>
                               )}
@@ -1083,7 +1068,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                     showToast('Chegada registada');
                                     loadAll();
                                   }}
-                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
                                   title="Marcar Chegada"
                                 >
                                   <UserCheck className="w-3.5 h-3.5" />
@@ -1099,7 +1084,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                     showToast('Mesa sentada');
                                     loadAll();
                                   }}
-                                  className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
                                   title="Sentar Mesa"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -1115,7 +1100,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                     showToast('Reserva finalizada');
                                     loadAll();
                                   }}
-                                  className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
                                   title="Concluir"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1130,7 +1115,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                   setEditingReservation(res);
                                   setShowManualModal(true);
                                 }}
-                                className="p-2 rounded-xl bg-neutral-700/60 hover:bg-neutral-700 text-neutral-300 hover:text-white cursor-pointer"
+                                className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 cursor-pointer shadow-xs"
                                 title="Editar Reserva"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -1140,7 +1125,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                               <button
                                 type="button"
                                 onClick={() => handleOpenGmailConfirm(res)}
-                                className="p-2 rounded-xl bg-neutral-700/60 hover:bg-neutral-700 text-red-400 hover:text-red-300 cursor-pointer"
+                                className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 cursor-pointer shadow-xs"
                                 title="Enviar Confirmação por Gmail"
                               >
                                 <Mail className="w-3.5 h-3.5" />
@@ -1157,7 +1142,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                       loadAll();
                                     }
                                   }}
-                                  className="p-2 rounded-xl bg-neutral-700/60 hover:bg-rose-950 text-neutral-400 hover:text-rose-400 cursor-pointer"
+                                  className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200 cursor-pointer shadow-xs"
                                   title="Cancelar Reserva"
                                 >
                                   <XCircle className="w-3.5 h-3.5" />
@@ -1174,18 +1159,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 {/* ÁREA SECUNDÁRIA: Distribuição por Horário & Alertas */}
                 <div className="space-y-4">
                   {/* Distribuição por Turno */}
-                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4">
-                    <h3 className="font-sans font-bold text-base text-white">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-4 shadow-xs">
+                    <h3 className="font-sans font-bold text-base text-slate-900">
                       Distribuição por Horário ({selectedDate})
                     </h3>
 
                     <div className="space-y-3 font-sans">
                       <div>
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-amber-400">Almoço · 12:30</span>
-                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.lunch1.count} / 12 mesas</span>
+                          <span className="font-bold text-amber-700">Almoço · 12:30</span>
+                          <span className="tabular-nums font-semibold text-slate-700">{shiftDistribution.lunch1.count} / 12 mesas</span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className="h-full bg-amber-500 rounded-full transition-all"
                             style={{ width: `${Math.min(100, (shiftDistribution.lunch1.count / 12) * 100)}%` }}
@@ -1195,10 +1180,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
                       <div>
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-amber-400">Almoço · 14:00</span>
-                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.lunch2.count} / 12 mesas</span>
+                          <span className="font-bold text-amber-700">Almoço · 14:00</span>
+                          <span className="tabular-nums font-semibold text-slate-700">{shiftDistribution.lunch2.count} / 12 mesas</span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className="h-full bg-amber-500 rounded-full transition-all"
                             style={{ width: `${Math.min(100, (shiftDistribution.lunch2.count / 12) * 100)}%` }}
@@ -1208,10 +1193,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
                       <div>
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-sky-400">Jantar · 19:30</span>
-                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.dinner1.count} / 12 mesas</span>
+                          <span className="font-bold text-sky-700">Jantar · 19:30</span>
+                          <span className="tabular-nums font-semibold text-slate-700">{shiftDistribution.dinner1.count} / 12 mesas</span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className="h-full bg-sky-500 rounded-full transition-all"
                             style={{ width: `${Math.min(100, (shiftDistribution.dinner1.count / 12) * 100)}%` }}
@@ -1221,10 +1206,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
                       <div>
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-sky-400">Jantar · 21:00</span>
-                          <span className="tabular-nums font-semibold text-neutral-300">{shiftDistribution.dinner2.count} / 12 mesas</span>
+                          <span className="font-bold text-sky-700">Jantar · 21:00</span>
+                          <span className="tabular-nums font-semibold text-slate-700">{shiftDistribution.dinner2.count} / 12 mesas</span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className="h-full bg-sky-500 rounded-full transition-all"
                             style={{ width: `${Math.min(100, (shiftDistribution.dinner2.count / 12) * 100)}%` }}
@@ -1235,42 +1220,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   </div>
 
                   {/* Estado da Ocupação do Restaurante */}
-                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3">
-                    <h3 className="font-sans font-bold text-base text-white">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 shadow-xs">
+                    <h3 className="font-sans font-bold text-base text-slate-900">
                       Ocupação das Mesas (12 Total)
                     </h3>
                     <div className="grid grid-cols-2 gap-2 text-xs font-sans">
-                      <div className="p-2.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60">
-                        <span className="text-neutral-400 block text-[11px]">Livres</span>
-                        <span className="font-bold text-lg text-emerald-400 tabular-nums">{daySummary.freeTables}</span>
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                        <span className="text-emerald-700 block text-[11px] font-semibold">Livres</span>
+                        <span className="font-bold text-lg text-emerald-800 tabular-nums">{daySummary.freeTables}</span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60">
-                        <span className="text-neutral-400 block text-[11px]">Ocupadas</span>
-                        <span className="font-bold text-lg text-rose-400 tabular-nums">{daySummary.occupiedTables}</span>
+                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                        <span className="text-rose-700 block text-[11px] font-semibold">Ocupadas</span>
+                        <span className="font-bold text-lg text-rose-800 tabular-nums">{daySummary.occupiedTables}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Alertas Importantes */}
-                  <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3 font-sans">
-                    <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 font-sans shadow-xs">
+                    <h3 className="font-sans font-bold text-base text-slate-900 flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-500" />
                       <span>Alertas da Operação</span>
                     </h3>
 
                     <div className="space-y-2 text-xs">
                       {pendingReservationsCount > 0 && (
-                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl">
+                        <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
                           Existem <strong>{pendingReservationsCount}</strong> reservas a aguardar confirmação ou chegada hoje.
                         </div>
                       )}
                       {blockedPeriods.length > 0 && (
-                        <div className="p-3 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded-xl">
+                        <div className="p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl">
                           Existem <strong>{blockedPeriods.length}</strong> períodos ou mesas bloqueadas configurados.
                         </div>
                       )}
-                      <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
                         <span>Webhook n8n ativo em cada reserva online.</span>
                       </div>
                     </div>
@@ -1286,30 +1271,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {activeSection === 'reservas' && (
             <div className="space-y-4">
               {/* Toolbar & Filters */}
-              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3 font-sans">
+              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 font-sans shadow-xs">
                 <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                   {/* Search */}
                   <div className="relative flex-1">
-                    <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Pesquisar por cliente, telemóvel, código ou mesa..."
                       value={resSearchQuery}
                       onChange={(e) => setResSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
                   {/* Actions: View Toggle + Export + New */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex rounded-xl bg-neutral-100 dark:bg-neutral-800 p-1 border border-neutral-200 dark:border-neutral-700">
+                    <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
                       <button
                         type="button"
                         onClick={() => setReservationViewMode('tabela')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                           reservationViewMode === 'tabela'
-                            ? 'bg-amber-500 text-neutral-950'
-                            : 'text-neutral-400 hover:text-white'
+                            ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         Tabela
@@ -1319,8 +1304,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                         onClick={() => setReservationViewMode('turnos')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                           reservationViewMode === 'turnos'
-                            ? 'bg-amber-500 text-neutral-950'
-                            : 'text-neutral-400 hover:text-white'
+                            ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         Turnos
@@ -1330,7 +1315,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <button
                       type="button"
                       onClick={exportReservationsToCsv}
-                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                       title="Exportar para Excel / CSV"
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -1342,14 +1327,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 {/* Filter Pills */}
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   {/* Date Filter */}
-                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Data:</span>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Data:</span>
                   <button
                     type="button"
                     onClick={() => setResDateFilter('todas')}
                     className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       resDateFilter === 'todas'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     Todas
@@ -1359,8 +1344,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     onClick={() => setResDateFilter('hoje')}
                     className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       resDateFilter === 'hoje'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     Hoje
@@ -1370,8 +1355,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     onClick={() => setResDateFilter('amanha')}
                     className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       resDateFilter === 'amanha'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     Amanhã
@@ -1381,21 +1366,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     onClick={() => setResDateFilter('semana')}
                     className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       resDateFilter === 'semana'
-                        ? 'bg-amber-500 text-neutral-950'
-                        : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     Esta Semana
                   </button>
 
-                  <div className="h-4 w-[1px] bg-neutral-700 mx-1 hidden sm:block" />
+                  <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
 
                   {/* Status Filter */}
-                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Estado:</span>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Estado:</span>
                   <select
                     value={resStatusFilter}
                     onChange={(e) => setResStatusFilter(e.target.value)}
-                    className="px-2.5 py-1 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-200 font-medium text-xs"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-800 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="todas">Todos os Estados</option>
                     <option value="confirmada">Confirmada</option>
@@ -1407,11 +1392,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   </select>
 
                   {/* Pax Filter */}
-                  <span className="text-neutral-500 font-bold uppercase tracking-wider text-[11px]">Pax:</span>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Pax:</span>
                   <select
                     value={resPaxFilter}
                     onChange={(e) => setResPaxFilter(e.target.value)}
-                    className="px-2.5 py-1 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-200 font-medium text-xs"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-800 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="todos">Todos</option>
                     <option value="1-2">1-2 Pessoas</option>
@@ -1427,44 +1412,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   {/* Mobile Cards View (< 768px) */}
                   <div className="md:hidden space-y-3 font-sans">
                     {filteredReservations.length === 0 ? (
-                      <div className="text-center py-12 text-neutral-500 bg-neutral-900 rounded-2xl p-6">
+                      <div className="text-center py-12 text-slate-400 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
                         Nenhuma reserva encontrada com os filtros selecionados.
                       </div>
                     ) : (
                       filteredReservations.map((res) => (
                         <div
                           key={`res-card-${res.id}`}
-                          className="p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-3 shadow-sm"
+                          className="p-4 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-xs"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="font-sans font-bold text-base text-white">{res.customerName}</div>
-                              <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                              <div className="font-sans font-bold text-base text-slate-900">{res.customerName}</div>
+                              <div className="font-sans font-medium text-xs text-slate-500 tabular-nums">
                                 {res.customerPhone}
                               </div>
                             </div>
                             {renderStatusBadge(res.status)}
                           </div>
 
-                          <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-neutral-800/50 rounded-xl text-xs">
+                          <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-slate-50 border border-slate-100 rounded-xl text-xs">
                             <div>
-                              <span className="text-neutral-500 text-[11px] block">Mesa</span>
-                              <span className="font-sans font-bold text-amber-400">Mesa {res.tableId}</span>
+                              <span className="text-slate-400 text-[11px] block font-medium">Mesa</span>
+                              <span className="font-sans font-bold text-amber-700">Mesa {res.tableId}</span>
                             </div>
                             <div>
-                              <span className="text-neutral-500 text-[11px] block">Data & Hora</span>
-                              <span className="font-sans font-medium tabular-nums text-white">
+                              <span className="text-slate-400 text-[11px] block font-medium">Data & Hora</span>
+                              <span className="font-sans font-medium tabular-nums text-slate-800">
                                 {res.date} · {res.time}
                               </span>
                             </div>
                             <div>
-                              <span className="text-neutral-500 text-[11px] block">Pessoas</span>
-                              <span className="font-sans font-medium tabular-nums text-white">{res.guests} pax</span>
+                              <span className="text-slate-400 text-[11px] block font-medium">Pessoas</span>
+                              <span className="font-sans font-medium tabular-nums text-slate-800">{res.guests} pax</span>
                             </div>
                           </div>
 
                           {res.specialRequests.length > 0 && (
-                            <div className="text-xs text-neutral-300 bg-neutral-800/30 p-2 rounded-lg">
+                            <div className="text-xs text-slate-700 bg-amber-50/60 border border-amber-200/60 p-2 rounded-lg">
                               <strong>Pedidos:</strong> {res.specialRequests.join(', ')}
                             </div>
                           )}
@@ -1479,7 +1464,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                   showToast('Chegada registada');
                                   loadAll();
                                 }}
-                                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
                               >
                                 <UserCheck className="w-3.5 h-3.5" />
                                 <span>Chegou</span>
@@ -1494,7 +1479,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                   showToast('Mesa sentada');
                                   loadAll();
                                 }}
-                                className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
                               >
                                 <Check className="w-3.5 h-3.5" />
                                 <span>Sentar</span>
@@ -1509,7 +1494,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                   showToast('Reserva concluída');
                                   loadAll();
                                 }}
-                                className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                                className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Concluir</span>
@@ -1522,7 +1507,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                 setEditingReservation(res);
                                 setShowManualModal(true);
                               }}
-                              className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-sans font-bold text-xs rounded-xl border border-neutral-700 cursor-pointer"
+                              className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-700 font-sans font-bold text-xs rounded-xl border border-slate-200 cursor-pointer shadow-xs"
                             >
                               Editar
                             </button>
@@ -1530,7 +1515,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => handleOpenGmailConfirm(res)}
-                              className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-red-400 font-sans font-bold text-xs rounded-xl border border-neutral-700 cursor-pointer"
+                              className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 font-sans font-bold text-xs rounded-xl border border-red-200 cursor-pointer shadow-xs"
                             >
                               Email
                             </button>
@@ -1545,7 +1530,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                     loadAll();
                                   }
                                 }}
-                                className="py-2 px-2.5 bg-neutral-800 hover:bg-rose-950 text-neutral-400 hover:text-rose-400 rounded-xl cursor-pointer"
+                                className="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 cursor-pointer shadow-xs"
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
@@ -1557,10 +1542,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   </div>
 
                   {/* Desktop Table View (>= 768px) */}
-                  <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm font-sans">
+                  <div className="hidden md:block bg-white rounded-2xl sm:rounded-3xl border border-slate-200 overflow-hidden shadow-xs font-sans">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left font-sans text-sm">
-                        <thead className="bg-neutral-50 dark:bg-neutral-800/70 border-b border-neutral-200 dark:border-neutral-800 font-sans font-bold text-[13px] uppercase tracking-wider text-neutral-400">
+                        <thead className="bg-slate-50 border-b border-slate-200 font-sans font-bold text-[12px] uppercase tracking-wider text-slate-500">
                           <tr>
                             <th className="px-4 py-3.5">Cliente</th>
                             <th className="px-4 py-3.5">Data & Hora</th>
@@ -1571,38 +1556,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                             <th className="px-4 py-3.5 text-right">Ações</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 font-sans font-normal text-sm">
+                        <tbody className="divide-y divide-slate-100 font-sans font-normal text-sm">
                           {filteredReservations.length === 0 ? (
                             <tr>
-                              <td colSpan={7} className="text-center py-12 text-neutral-400">
+                              <td colSpan={7} className="text-center py-12 text-slate-400">
                                 Nenhuma reserva encontrada.
                               </td>
                             </tr>
                           ) : (
                             filteredReservations.map((res) => (
-                              <tr key={res.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors">
+                              <tr key={res.id} className="hover:bg-slate-50/80 transition-colors">
                                 <td className="px-4 py-3.5">
-                                  <div className="font-sans font-bold text-white">{res.customerName}</div>
-                                  <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                                  <div className="font-sans font-bold text-slate-900">{res.customerName}</div>
+                                  <div className="font-sans font-medium text-xs text-slate-500 tabular-nums">
                                     {res.customerPhone}
                                   </div>
                                 </td>
                                 <td className="px-4 py-3.5">
-                                  <div className="font-sans font-medium text-white tabular-nums">{res.date}</div>
-                                  <div className="font-sans font-medium text-xs text-neutral-400 tabular-nums">
+                                  <div className="font-sans font-medium text-slate-800 tabular-nums">{res.date}</div>
+                                  <div className="font-sans font-medium text-xs text-slate-500 tabular-nums">
                                     {res.time} ({res.durationMinutes}m)
                                   </div>
                                 </td>
-                                <td className="px-4 py-3.5 font-sans font-bold text-amber-500">
+                                <td className="px-4 py-3.5 font-sans font-bold text-amber-700">
                                   Mesa {res.tableId}
                                 </td>
-                                <td className="px-4 py-3.5 font-sans font-medium tabular-nums text-white">
+                                <td className="px-4 py-3.5 font-sans font-medium tabular-nums text-slate-700">
                                   {res.guests} pax
                                 </td>
                                 <td className="px-4 py-3.5">
                                   {renderStatusBadge(res.status)}
                                 </td>
-                                <td className="px-4 py-3.5 max-w-xs truncate text-neutral-400 text-xs">
+                                <td className="px-4 py-3.5 max-w-xs truncate text-slate-500 text-xs">
                                   {res.specialRequests.join(', ') || res.internalNotes || '—'}
                                 </td>
                                 <td className="px-4 py-3.5 text-right">
@@ -1615,7 +1600,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                           showToast('Chegada registada');
                                           loadAll();
                                         }}
-                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
                                       >
                                         Chegou
                                       </button>
@@ -1629,7 +1614,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                           showToast('Mesa sentada');
                                           loadAll();
                                         }}
-                                        className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
                                       >
                                         Sentar
                                       </button>
@@ -1643,7 +1628,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                           showToast('Mesa concluída');
                                           loadAll();
                                         }}
-                                        className="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-neutral-950 font-sans font-bold text-xs rounded-lg cursor-pointer"
+                                        className="px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
                                       >
                                         Concluir
                                       </button>
@@ -1655,7 +1640,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                         setEditingReservation(res);
                                         setShowManualModal(true);
                                       }}
-                                      className="p-1.5 hover:bg-neutral-800 rounded-lg text-neutral-300 hover:text-white cursor-pointer"
+                                      className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 border border-slate-200 cursor-pointer shadow-xs"
                                       title="Editar Reserva"
                                     >
                                       <Edit2 className="w-4 h-4" />
@@ -1664,7 +1649,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                     <button
                                       type="button"
                                       onClick={() => handleOpenGmailConfirm(res)}
-                                      className="p-1.5 hover:bg-neutral-800 rounded-lg text-red-400 cursor-pointer"
+                                      className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 border border-red-200 cursor-pointer shadow-xs"
                                       title="Enviar confirmação por Gmail"
                                     >
                                       <Mail className="w-4 h-4" />
@@ -1680,7 +1665,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                             loadAll();
                                           }
                                         }}
-                                        className="p-1.5 hover:bg-neutral-800 rounded-lg text-neutral-500 hover:text-rose-400 cursor-pointer"
+                                        className="p-1.5 hover:bg-rose-50 rounded-lg text-rose-600 border border-rose-200 cursor-pointer shadow-xs"
                                         title="Cancelar reserva"
                                       >
                                         <XCircle className="w-4 h-4" />
@@ -1700,13 +1685,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
               {/* VISTA 2: CALENDÁRIO / TURNOS */}
               {reservationViewMode === 'turnos' && (
-                <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-5 font-sans">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-5 font-sans shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-sans font-bold text-base text-white">
+                      <h3 className="font-sans font-bold text-base text-slate-900">
                         Vista por Turnos ({selectedDate})
                       </h3>
-                      <p className="font-sans font-normal text-xs text-neutral-400">
+                      <p className="font-sans font-normal text-xs text-slate-500">
                         Ocupação detalhada das mesas por turno de almoço e jantar.
                       </p>
                     </div>
@@ -1722,24 +1707,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                       return (
                         <div
                           key={`slot-col-${slotTime}`}
-                          className="bg-neutral-800/60 rounded-2xl border border-neutral-700/60 p-4 space-y-3"
+                          className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-3"
                         >
-                          <div className="flex items-center justify-between pb-2 border-b border-neutral-700/60">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
                             <div>
                               <span className={`font-bold text-xs uppercase px-2 py-0.5 rounded ${
-                                isLunch ? 'bg-amber-500/15 text-amber-400' : 'bg-sky-500/15 text-sky-400'
+                                isLunch ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-sky-100 text-sky-900 border border-sky-200'
                               }`}>
                                 {isLunch ? 'Almoço' : 'Jantar'}
                               </span>
-                              <div className="font-bold text-lg text-white tabular-nums mt-1">{slotTime}</div>
+                              <div className="font-bold text-lg text-slate-900 tabular-nums mt-1">{slotTime}</div>
                             </div>
-                            <span className="font-bold text-xs text-neutral-400 tabular-nums">
+                            <span className="font-bold text-xs text-slate-500 tabular-nums">
                               {slotRes.length} / 12 mesas
                             </span>
                           </div>
 
                           {slotRes.length === 0 ? (
-                            <div className="py-8 text-center text-xs text-neutral-500">
+                            <div className="py-8 text-center text-xs text-slate-400">
                               Nenhuma mesa reservada neste turno.
                             </div>
                           ) : (
@@ -1747,13 +1732,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                               {slotRes.map((r) => (
                                 <div
                                   key={r.id}
-                                  className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-700/80 space-y-1 text-xs"
+                                  className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1 text-xs shadow-2xs"
                                 >
                                   <div className="flex items-center justify-between">
-                                    <strong className="text-white truncate">{r.customerName}</strong>
-                                    <span className="font-bold text-amber-400">Mesa {r.tableId}</span>
+                                    <strong className="text-slate-900 truncate">{r.customerName}</strong>
+                                    <span className="font-bold text-amber-700">Mesa {r.tableId}</span>
                                   </div>
-                                  <div className="flex items-center justify-between text-[11px] text-neutral-400">
+                                  <div className="flex items-center justify-between text-[11px] text-slate-500">
                                     <span>{r.guests} pax</span>
                                     {renderStatusBadge(r.status)}
                                   </div>
@@ -1776,12 +1761,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {activeSection === 'mesas' && (
             <div className="space-y-4 font-sans">
               {/* Date & Shift Filter */}
-              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
                 <div>
-                  <h3 className="font-sans font-bold text-lg text-white">
+                  <h3 className="font-sans font-bold text-lg text-slate-900">
                     Planta da Sala & Gestão de Mesas
                   </h3>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <p className="font-sans font-normal text-xs text-slate-500">
                     Toque numa mesa para alterar capacidade, ativar/desativar ou reatribuir reservas.
                   </p>
                 </div>
@@ -1790,13 +1775,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="px-3 py-2 text-sm font-sans font-medium tabular-nums bg-neutral-800 border border-neutral-700 rounded-xl text-white"
+                    className="px-3 py-2 text-sm font-sans font-medium tabular-nums bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
               </div>
 
               {/* Visual Floor Plan */}
-              <div className="bg-white dark:bg-neutral-900 p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+              <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
                 <FloorPlanSVG
                   mode="management"
                   tables={tables}
@@ -1816,13 +1801,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <div
                       key={`tbl-detail-${t.id}`}
                       onClick={() => setSelectedTableForModal(t)}
-                      className="p-4 bg-white dark:bg-neutral-900 hover:bg-neutral-800/80 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-2 cursor-pointer transition-all active:scale-[0.98]"
+                      className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 space-y-2 cursor-pointer transition-all active:scale-[0.98] shadow-xs"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-sans font-bold text-base text-white">
+                        <span className="font-sans font-bold text-base text-slate-900">
                           Mesa {t.number}
                         </span>
-                        <span className="text-xs font-bold text-neutral-400 tabular-nums">
+                        <span className="text-xs font-bold text-slate-500 tabular-nums">
                           {t.capacity} pax
                         </span>
                       </div>
@@ -1831,33 +1816,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                         <span
                           className={`font-sans font-bold text-[11px] uppercase tracking-wider px-2 py-0.5 rounded ${
                             status === 'sentada'
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
                               : status === 'chegou'
-                              ? 'bg-amber-500/20 text-amber-400'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : status === 'reservada'
-                              ? 'bg-sky-500/20 text-sky-400'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-200'
                               : status === 'a_limpar'
-                              ? 'bg-purple-500/20 text-purple-400'
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200'
                               : status === 'bloqueada'
-                              ? 'bg-neutral-700 text-neutral-400'
-                              : 'bg-emerald-500/20 text-emerald-400'
+                              ? 'bg-slate-100 text-slate-600 border border-slate-300'
+                              : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           }`}
                         >
                           {status}
                         </span>
 
-                        <span className="text-[11px] text-neutral-400 capitalize">
+                        <span className="text-[11px] text-slate-400 capitalize">
                           {t.section}
                         </span>
                       </div>
 
                       {res ? (
-                        <div className="pt-2 border-t border-neutral-800 text-xs text-neutral-300">
-                          <strong className="block truncate">{res.customerName}</strong>
-                          <span className="text-neutral-400 tabular-nums">{res.time} · {res.guests} pax</span>
+                        <div className="pt-2 border-t border-slate-100 text-xs text-slate-700">
+                          <strong className="block truncate text-slate-900">{res.customerName}</strong>
+                          <span className="text-slate-500 tabular-nums">{res.time} · {res.guests} pax</span>
                         </div>
                       ) : (
-                        <div className="pt-2 border-t border-neutral-800 text-[11px] text-neutral-500 italic">
+                        <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
                           Mesa disponível
                         </div>
                       )}
@@ -1873,26 +1858,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {/* ======================================================================= */}
           {activeSection === 'clientes' && (
             <div className="space-y-4 font-sans">
-              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Pesquisar por nome, telemóvel ou email..."
                     value={customerSearchQuery}
                     onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
 
-                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Total: {filteredCustomers.length} Clientes Registados
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredCustomers.length === 0 ? (
-                  <div className="col-span-full py-12 text-center text-neutral-500 bg-neutral-900 rounded-2xl">
+                  <div className="col-span-full py-12 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">
                     Nenhum cliente encontrado.
                   </div>
                 ) : (
@@ -1904,44 +1889,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     return (
                       <div
                         key={cust.id}
-                        className="p-5 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-3 shadow-sm flex flex-col justify-between"
+                        className="p-5 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-xs flex flex-col justify-between"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-sans font-bold text-base text-white truncate">
+                            <span className="font-sans font-bold text-base text-slate-900 truncate">
                               {cust.name}
                             </span>
-                            <span className="font-sans font-bold text-xs uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 tabular-nums">
+                            <span className="font-sans font-bold text-xs uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 tabular-nums">
                               {cust.visitsCount} {cust.visitsCount === 1 ? 'visita' : 'visitas'}
                             </span>
                           </div>
 
-                          <div className="text-xs text-neutral-400 space-y-0.5 tabular-nums">
+                          <div className="text-xs text-slate-600 space-y-0.5 tabular-nums">
                             <div>📞 {cust.phone}</div>
                             {cust.email && <div className="truncate">✉️ {cust.email}</div>}
                             {cust.lastVisit && <div>📅 Última visita: {cust.lastVisit}</div>}
                           </div>
 
                           {cust.allergies && cust.allergies.length > 0 && (
-                            <div className="text-xs text-amber-300/90 pt-1">
+                            <div className="text-xs text-amber-900 bg-amber-50 border border-amber-200/60 p-2 rounded-lg">
                               <strong>Alergias / Pedidos:</strong> {cust.allergies.join(', ')}
                             </div>
                           )}
 
                           {cust.internalNotes && (
-                            <div className="text-xs text-neutral-400 bg-neutral-800/40 p-2 rounded-lg italic">
+                            <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 p-2 rounded-lg italic">
                               "{cust.internalNotes}"
                             </div>
                           )}
 
                           {/* Mini History */}
-                          <div className="pt-2 text-xs text-neutral-400">
-                            <strong>Histórico ({custRes.length}):</strong>
+                          <div className="pt-2 text-xs text-slate-500">
+                            <strong className="text-slate-700">Histórico ({custRes.length}):</strong>
                             <div className="mt-1 space-y-1">
                               {custRes.slice(0, 3).map((r) => (
-                                <div key={r.id} className="text-[11px] text-neutral-400 flex justify-between">
+                                <div key={r.id} className="text-[11px] text-slate-600 flex justify-between">
                                   <span>{r.date} às {r.time}</span>
-                                  <span className="capitalize text-neutral-300">{r.status}</span>
+                                  <span className="capitalize text-slate-800 font-medium">{r.status}</span>
                                 </div>
                               ))}
                             </div>
@@ -1949,7 +1934,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                         </div>
 
                         {/* RGPD Compliance Action */}
-                        <div className="pt-3 border-t border-neutral-800 flex justify-end">
+                        <div className="pt-3 border-t border-slate-100 flex justify-end">
                           <button
                             type="button"
                             onClick={async () => {
@@ -1959,7 +1944,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                 loadAll();
                               }
                             }}
-                            className="text-xs text-neutral-500 hover:text-rose-400 flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-xs text-slate-400 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
                             title="Direito ao Esquecimento RGPD"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1980,19 +1965,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {activeSection === 'estatisticas' && (
             <div className="space-y-6 font-sans">
               {/* Period Selector */}
-              <div className="flex items-center justify-between bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
                 <div>
-                  <h3 className="font-sans font-bold text-base text-white">Relatório de Performance</h3>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <h3 className="font-sans font-bold text-base text-slate-900">Relatório de Performance</h3>
+                  <p className="font-sans font-normal text-xs text-slate-500">
                     Métricas reais calculadas a partir da base de dados do restaurante.
                   </p>
                 </div>
-                <div className="flex gap-1 bg-neutral-800 p-1 rounded-xl">
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     type="button"
                     onClick={() => setStatsPeriod('7dias')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      statsPeriod === '7dias' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                      statsPeriod === '7dias' ? 'bg-amber-500 text-slate-950 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     7 Dias
@@ -2001,7 +1986,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     type="button"
                     onClick={() => setStatsPeriod('30dias')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      statsPeriod === '30dias' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                      statsPeriod === '30dias' ? 'bg-amber-500 text-slate-950 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     30 Dias
@@ -2010,7 +1995,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     type="button"
                     onClick={() => setStatsPeriod('tudo')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      statsPeriod === 'tudo' ? 'bg-amber-500 text-neutral-950' : 'text-neutral-400 hover:text-white'
+                      statsPeriod === 'tudo' ? 'bg-amber-500 text-slate-950 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     Tudo
@@ -2020,48 +2005,48 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
               {/* 6 Key Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Reservas</span>
-                  <div className="font-bold text-2xl text-white tabular-nums">{statsData.total}</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Reservas</span>
+                  <div className="font-bold text-2xl text-slate-900 tabular-nums">{statsData.total}</div>
                 </div>
 
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Clientes</span>
-                  <div className="font-bold text-2xl text-emerald-400 tabular-nums">{statsData.totalGuests}</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Clientes</span>
+                  <div className="font-bold text-2xl text-emerald-700 tabular-nums">{statsData.totalGuests}</div>
                 </div>
 
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Média Pax</span>
-                  <div className="font-bold text-2xl text-sky-400 tabular-nums">{statsData.avgGuests}</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Média Pax</span>
+                  <div className="font-bold text-2xl text-sky-700 tabular-nums">{statsData.avgGuests}</div>
                 </div>
 
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Cancelamentos</span>
-                  <div className="font-bold text-2xl text-rose-400 tabular-nums">{statsData.cancelRate}%</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Cancelamentos</span>
+                  <div className="font-bold text-2xl text-rose-700 tabular-nums">{statsData.cancelRate}%</div>
                 </div>
 
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">No-Show</span>
-                  <div className="font-bold text-2xl text-purple-400 tabular-nums">{statsData.noShowRate}%</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">No-Show</span>
+                  <div className="font-bold text-2xl text-purple-700 tabular-nums">{statsData.noShowRate}%</div>
                 </div>
 
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-1">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Recorrentes</span>
-                  <div className="font-bold text-2xl text-amber-400 tabular-nums">{statsData.recurringRate}%</div>
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Recorrentes</span>
+                  <div className="font-bold text-2xl text-amber-700 tabular-nums">{statsData.recurringRate}%</div>
                 </div>
               </div>
 
               {/* Graphical Analysis */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-3xl space-y-4">
-                  <h4 className="font-bold text-sm text-white">Distribuição por Serviço</h4>
+                <div className="p-5 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
+                  <h4 className="font-bold text-sm text-slate-900">Distribuição por Serviço</h4>
                   <div className="space-y-3 text-xs">
                     <div>
-                      <div className="flex justify-between mb-1">
+                      <div className="flex justify-between mb-1 text-slate-600 font-medium">
                         <span>Almoço (12:30 e 14:00)</span>
-                        <span className="font-bold tabular-nums">{statsData.lunchCount} reservas</span>
+                        <span className="font-bold tabular-nums text-slate-900">{statsData.lunchCount} reservas</span>
                       </div>
-                      <div className="w-full h-3 rounded-full bg-neutral-800 overflow-hidden">
+                      <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className="h-full bg-amber-500 rounded-full"
                           style={{
@@ -2072,11 +2057,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     </div>
 
                     <div>
-                      <div className="flex justify-between mb-1">
+                      <div className="flex justify-between mb-1 text-slate-600 font-medium">
                         <span>Jantar (19:30 e 21:00)</span>
-                        <span className="font-bold tabular-nums">{statsData.dinnerCount} reservas</span>
+                        <span className="font-bold tabular-nums text-slate-900">{statsData.dinnerCount} reservas</span>
                       </div>
-                      <div className="w-full h-3 rounded-full bg-neutral-800 overflow-hidden">
+                      <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className="h-full bg-sky-500 rounded-full"
                           style={{
@@ -2088,12 +2073,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-3xl space-y-4">
-                  <h4 className="font-bold text-sm text-white">Retenção de Clientes</h4>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    <strong>{statsData.recurringRate}%</strong> dos clientes cadastrados já visitaram o Qué Pasa mais de uma vez.
+                <div className="p-5 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
+                  <h4 className="font-bold text-sm text-slate-900">Retenção de Clientes</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    <strong>{statsData.recurringRate}%</strong> dos clientes registados já visitaram o Qué Pasa mais de uma vez.
                   </p>
-                  <div className="p-3.5 rounded-xl bg-neutral-800/60 border border-neutral-700/60 text-xs text-neutral-300">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
                     Acompanhamento de preferências alimentares e notas internas registadas para proporcionar um atendimento personalizado.
                   </div>
                 </div>
@@ -2106,10 +2091,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {/* ======================================================================= */}
           {activeSection === 'notificacoes' && (
             <div className="space-y-4 font-sans">
-              <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-3">
+              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs">
                 <div>
-                  <h3 className="font-sans font-bold text-lg text-white">Central de Notificações</h3>
-                  <p className="font-sans font-normal text-xs text-neutral-400">
+                  <h3 className="font-sans font-bold text-lg text-slate-900">Central de Notificações</h3>
+                  <p className="font-sans font-normal text-xs text-slate-500">
                     Alertas em tempo real sobre novas reservas, alterações de estado e mensagens.
                   </p>
                 </div>
@@ -2118,7 +2103,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <button
                       type="button"
                       onClick={handleRequestPush}
-                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-amber-400 rounded-xl text-xs font-bold border border-amber-500/20 flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-amber-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
                       <Bell className="w-3.5 h-3.5" />
                       <span>Ativar no Telemóvel</span>
@@ -2128,7 +2113,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <button
                       type="button"
                       onClick={() => markOwnerNotificationsRead()}
-                      className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-xl text-xs font-bold cursor-pointer"
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 cursor-pointer shadow-xs transition-colors"
                     >
                       Marcar Todas como Lidas
                     </button>
@@ -2136,9 +2121,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden shadow-sm">
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-xs">
                 {notifications.length === 0 ? (
-                  <div className="text-center py-12 text-neutral-500 text-sm">
+                  <div className="text-center py-12 text-slate-400 text-sm">
                     Sem notificações no histórico.
                   </div>
                 ) : (
@@ -2146,18 +2131,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <div
                       key={n.id}
                       className={`p-4 flex items-start justify-between gap-3 transition-colors ${
-                        !n.isRead ? 'bg-amber-500/5' : ''
+                        !n.isRead ? 'bg-amber-50/60' : 'hover:bg-slate-50'
                       }`}
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-white">{n.title}</span>
+                          <span className="font-bold text-sm text-slate-900">{n.title}</span>
                           {!n.isRead && (
                             <span className="w-2 h-2 rounded-full bg-amber-500" />
                           )}
                         </div>
-                        <p className="text-xs text-neutral-300 leading-relaxed">{n.message}</p>
-                        <span className="text-[11px] text-neutral-500 tabular-nums">
+                        <p className="text-xs text-slate-600 leading-relaxed">{n.message}</p>
+                        <span className="text-[11px] text-slate-400 tabular-nums">
                           {new Date(n.createdAt).toLocaleString('pt-PT')}
                         </span>
                       </div>
@@ -2174,15 +2159,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {activeSection === 'configuracoes' && settings && (
             <div className="space-y-6 font-sans">
               {/* Webhook n8n Integration Status */}
-              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
                       <Zap className="w-5 h-5 animate-pulse" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-base text-white">Integração Webhook n8n</h4>
-                      <p className="text-xs text-neutral-400">
+                      <h4 className="font-bold text-base text-slate-900">Integração Webhook n8n</h4>
+                      <p className="text-xs text-slate-500">
                         Cada nova reserva dispara automaticamente um HTTP POST para o fluxo n8n.
                       </p>
                     </div>
@@ -2192,71 +2177,71 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     type="button"
                     onClick={handleTestWebhook}
                     disabled={isTestingWebhook}
-                    className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-neutral-950 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isTestingWebhook ? 'animate-spin' : ''}`} />
                     <span>{isTestingWebhook ? 'A testar...' : 'Disparar Webhook de Teste'}</span>
                   </button>
                 </div>
 
-                <div className="p-3 bg-neutral-800/80 rounded-xl border border-neutral-700/80 font-mono text-xs text-neutral-300 break-all flex items-center justify-between gap-2">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 break-all flex items-center justify-between gap-2">
                   <span>{N8N_WEBHOOK_URL}</span>
-                  <span className="font-sans font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                  <span className="font-sans font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
                     Ativo
                   </span>
                 </div>
               </div>
 
               {/* Restaurant Details Form */}
-              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
-                <h4 className="font-bold text-base text-white">Dados Oficiais do Restaurante</h4>
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
+                <h4 className="font-bold text-base text-slate-900">Dados Oficiais do Restaurante</h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                       Telefone Oficial
                     </label>
                     <input
                       type="text"
                       value={settings.phone || '234 424 208'}
                       onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                       Email de Contacto
                     </label>
                     <input
                       type="email"
                       value={settings.email || 'dono@barbaazul.pt'}
                       onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                       Morada
                     </label>
                     <input
                       type="text"
                       value={settings.address || 'Cais dos Mercantéis 14'}
                       onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                       Cidade
                     </label>
                     <input
                       type="text"
                       value={settings.city || 'Aveiro'}
                       onChange={(e) => setSettings({ ...settings, city: e.target.value })}
-                      className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white font-sans text-base sm:text-sm"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
                 </div>
@@ -2268,7 +2253,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                       await saveOwnerSettings(settings);
                       showToast('Configurações guardadas com sucesso');
                     }}
-                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold text-sm rounded-xl cursor-pointer"
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl cursor-pointer shadow-xs transition-colors"
                   >
                     Guardar Informações
                   </button>
@@ -2276,18 +2261,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
               </div>
 
               {/* Horários e Turnos Fixos */}
-              <div className="bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-4 shadow-sm">
-                <h4 className="font-bold text-base text-white">Horários e Turnos Operacionais</h4>
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
+                <h4 className="font-bold text-base text-slate-900">Horários e Turnos Operacionais</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3.5 bg-neutral-800/60 rounded-xl border border-neutral-700/60 space-y-1">
-                    <strong className="text-amber-400 font-bold text-sm block">Almoço</strong>
-                    <p className="text-neutral-300">Turno 1: 12:30 | Turno 2: 14:00</p>
-                    <span className="text-[11px] text-neutral-500">Duração estimada: 90 minutos</span>
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <strong className="text-amber-700 font-bold text-sm block">Almoço</strong>
+                    <p className="text-slate-700">Turno 1: 12:30 | Turno 2: 14:00</p>
+                    <span className="text-[11px] text-slate-500">Duração estimada: 90 minutos</span>
                   </div>
-                  <div className="p-3.5 bg-neutral-800/60 rounded-xl border border-neutral-700/60 space-y-1">
-                    <strong className="text-sky-400 font-bold text-sm block">Jantar</strong>
-                    <p className="text-neutral-300">Turno 1: 19:30 | Turno 2: 21:00</p>
-                    <span className="text-[11px] text-neutral-500">Duração estimada: 90 minutos</span>
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <strong className="text-sky-700 font-bold text-sm block">Jantar</strong>
+                    <p className="text-slate-700">Turno 1: 19:30 | Turno 2: 21:00</p>
+                    <span className="text-[11px] text-slate-500">Duração estimada: 90 minutos</span>
                   </div>
                 </div>
               </div>

@@ -108,10 +108,10 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Available slots for selected date & guests
+  // Available slots for selected date & guests (default to active turnos)
   const [availableSlots, setAvailableSlots] = useState<{ lunchSlots: string[]; dinnerSlots: string[] }>({
-    lunchSlots: [],
-    dinnerSlots: [],
+    lunchSlots: ['12:30', '14:00'],
+    dinnerSlots: ['19:30', '21:00'],
   });
 
   // Table availability map from server (only isFree / isBlocked - ZERO client data)
@@ -233,23 +233,47 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
       setIsLoadingSlots(true);
       fetchPublicSlots(selectedDate, guests)
         .then((slots) => {
-          setAvailableSlots(slots);
-          if (selectedTime && !slots.lunchSlots.includes(selectedTime) && !slots.dinnerSlots.includes(selectedTime)) {
+          if (slots && (slots.lunchSlots?.length > 0 || slots.dinnerSlots?.length > 0)) {
+            setAvailableSlots(slots);
+          } else {
+            // Check if day is explicitly closed
+            const isClosed = config?.closedDates?.includes(selectedDate);
+            if (isClosed) {
+              setAvailableSlots({ lunchSlots: [], dinnerSlots: [] });
+            } else {
+              setAvailableSlots({
+                lunchSlots: ['12:30', '14:00'],
+                dinnerSlots: ['19:30', '21:00'],
+              });
+            }
+          }
+          if (selectedTime && slots && !slots.lunchSlots?.includes(selectedTime) && !slots.dinnerSlots?.includes(selectedTime)) {
             setSelectedTime('');
             setSelectedTable(null);
           }
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error('Erro ao carregar horários disponíveis:', err);
+          // Fallback to standard turnos so user is not falsely blocked
+          setAvailableSlots({
+            lunchSlots: ['12:30', '14:00'],
+            dinnerSlots: ['19:30', '21:00'],
+          });
+        })
         .finally(() => setIsLoadingSlots(false));
     }
-  }, [selectedDate, guests]);
+  }, [selectedDate, guests, config?.closedDates]);
 
   // Fetch table availability when time is chosen
   useEffect(() => {
     if (selectedDate && selectedTime) {
       fetchPublicTableStatus(selectedDate, selectedTime, guests, sessionId)
         .then(setTableAvailabilityMap)
-        .catch(console.error);
+        .catch((err) => {
+          console.error('Erro ao obter status das mesas:', err);
+          // Default to free
+          setTableAvailabilityMap({});
+        });
     }
   }, [selectedDate, selectedTime, guests, sessionId]);
 
@@ -272,22 +296,23 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
     const chosenList = eligible.length > 0 ? eligible : freeTables;
 
     if (chosenList.length === 0) {
-      alert('Não temos mesas livres disponíveis para o tamanho do seu grupo neste turno.');
       return;
     }
 
     // Sort: least wasted seats first, then window preference
-    eligible.sort((a, b) => {
-      const diffA = a.capacity - guests;
-      const diffB = b.capacity - guests;
+    chosenList.sort((a, b) => {
+      const diffA = Math.abs(a.capacity - guests);
+      const diffB = Math.abs(b.capacity - guests);
       if (diffA !== diffB) return diffA - diffB;
       if (a.section === 'janela' && b.section !== 'janela') return -1;
       if (b.section === 'janela' && a.section !== 'janela') return 1;
       return a.number - b.number;
     });
 
-    handleSelectTable(eligible[0]);
-    setAutoAssigned(true);
+    if (chosenList[0]) {
+      handleSelectTable(chosenList[0]);
+      setAutoAssigned(true);
+    }
   };
 
   // Form validation
@@ -677,7 +702,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
             </p>
           </div>
 
-          {availableSlots.lunchSlots.length === 0 && availableSlots.dinnerSlots.length === 0 ? (
+          {isLoadingSlots ? (
+            <div className="p-12 text-center space-y-3">
+              <div className="w-8 h-8 border-3 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">A verificar mesas e horários disponíveis...</p>
+            </div>
+          ) : availableSlots.lunchSlots.length === 0 && availableSlots.dinnerSlots.length === 0 ? (
             <div className="p-8 bg-amber-50/70 border border-amber-200 rounded-2xl text-center space-y-4">
               <AlertCircle className="w-10 h-10 text-amber-600 mx-auto" />
               <div>

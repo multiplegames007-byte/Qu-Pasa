@@ -58,19 +58,19 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full shadow-2xl text-white overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in font-sans">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full shadow-2xl text-slate-900 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-800/50">
-          <div className="flex items-center gap-2.5 text-amber-400">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-2.5 text-amber-600">
             <Lock className="w-5 h-5" />
-            <h3 className="font-serif-display text-lg font-bold text-white">
+            <h3 className="font-serif-display text-lg font-bold text-slate-900">
               Bloquear Mesa, Horário ou Dia
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -79,24 +79,24 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           {error && (
-            <div className="p-3 bg-rose-950/60 border border-rose-800 text-rose-300 rounded-xl">
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl">
               {error}
             </div>
           )}
 
           {/* Type Selector */}
           <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">
+            <label className="block font-semibold text-slate-700 mb-1.5">
               Tipo de Bloqueio
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setType('dia_inteiro')}
-                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center ${
+                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                   type === 'dia_inteiro'
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 }`}
               >
                 Dia Inteiro
@@ -104,10 +104,10 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
               <button
                 type="button"
                 onClick={() => setType('horario')}
-                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center ${
+                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                   type === 'horario'
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 }`}
               >
                 Horário / Turno
@@ -115,10 +115,10 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
               <button
                 type="button"
                 onClick={() => setType('mesa')}
-                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center ${
+                className={`py-2.5 px-2 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                   type === 'mesa'
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 }`}
               >
                 Mesa Específica
@@ -128,7 +128,7 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
 
           {/* Date */}
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Data a Bloquear *</label>
+            <label className="block font-semibold text-slate-700 mb-1">Data a Bloquear *</label>
             <div className="relative">
               <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
               <input
@@ -136,7 +136,7 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
           </div>
@@ -145,21 +145,21 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
           {type === 'horario' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Hora de Início</label>
+                <label className="block font-semibold text-slate-700 mb-1">Hora de Início</label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Hora de Fim</label>
+                <label className="block font-semibold text-slate-700 mb-1">Hora de Fim</label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
             </div>
@@ -168,11 +168,11 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
           {/* Conditional Table Selector */}
           {type === 'mesa' && (
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Selecionar Mesa</label>
+              <label className="block font-semibold text-slate-700 mb-1">Selecionar Mesa</label>
               <select
                 value={tableId}
                 onChange={(e) => setTableId(Number(e.target.value))}
-                className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 {tables.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -185,14 +185,14 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
 
           {/* Reason */}
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Motivo do Bloqueio *</label>
+            <label className="block font-semibold text-slate-700 mb-1">Motivo do Bloqueio *</label>
             <input
               type="text"
               required
               placeholder="Ex: Evento Privado, Manutenção, Folga da equipa..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
@@ -200,14 +200,14 @@ export const BlockPeriodModal: React.FC<BlockPeriodModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold cursor-pointer border border-slate-200"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 rounded-xl font-bold"
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 rounded-xl font-bold cursor-pointer shadow-xs"
             >
               {isLoading ? 'A Guardar...' : 'Ativar Bloqueio'}
             </button>

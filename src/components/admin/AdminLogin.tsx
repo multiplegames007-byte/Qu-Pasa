@@ -16,7 +16,10 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    if (!cleanUser || !cleanPass) {
       setError('Por favor preencha o email e a palavra-passe.');
       return;
     }
@@ -25,8 +28,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
     setError(null);
 
     try {
-      const data = await ownerLogin(username.trim(), password.trim());
-      onLoginSuccess(data.user);
+      const data = await ownerLogin(cleanUser, cleanPass);
+      if (data?.user) {
+        onLoginSuccess(data.user);
+      } else {
+        throw new Error('Falha ao autenticar.');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Credenciais inválidas.';
       setError(message);
@@ -78,11 +85,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
             <div className="relative">
               <Mail className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="email"
+                type="text"
                 autoComplete="username"
-                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 required
-                placeholder="Email"
+                placeholder="Email ou utilizador"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-3.5 text-base sm:text-sm bg-black/40 border border-white/20 hover:border-white/40 focus:border-white rounded-xl text-white placeholder-white/45 focus:outline-none transition-colors backdrop-blur-sm"
@@ -94,6 +103,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               <input
                 type="password"
                 autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 required
                 placeholder="Palavra-passe"
                 value={password}
@@ -108,7 +120,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
             disabled={isLoading}
             className="w-full mt-2 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 disabled:opacity-50 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shadow-lg hover:shadow-xl"
           >
-            <span>{isLoading ? 'A entrar...' : 'Entrar'}</span>
+            <span>{isLoading ? 'A iniciar sessão...' : 'Entrar'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

@@ -943,7 +943,8 @@ function checkTableFree(
 
   for (const r of activeRes) {
     const rStart = timeToMins(r.time);
-    const rEnd = rStart + r.durationMinutes + (dbState.settings.cleaningBufferMinutes || 0);
+    const rDur = r.durationMinutes || 90;
+    const rEnd = rStart + rDur + (dbState.settings.cleaningBufferMinutes || 0);
     if (targetStart < rEnd && rStart < targetEnd) {
       return false;
     }
