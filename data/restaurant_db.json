@@ -1,0 +1,723 @@
+{
+  "tables": [
+    {
+      "id": 1,
+      "number": 1,
+      "capacity": 5,
+      "x": 120,
+      "y": 130,
+      "radius": 58,
+      "isActive": true,
+      "section": "janela"
+    },
+    {
+      "id": 2,
+      "number": 2,
+      "capacity": 3,
+      "x": 120,
+      "y": 290,
+      "radius": 52,
+      "isActive": true,
+      "section": "janela"
+    },
+    {
+      "id": 3,
+      "number": 3,
+      "capacity": 3,
+      "x": 120,
+      "y": 450,
+      "radius": 52,
+      "isActive": true,
+      "section": "janela"
+    },
+    {
+      "id": 4,
+      "number": 4,
+      "capacity": 2,
+      "x": 280,
+      "y": 130,
+      "radius": 46,
+      "isActive": true,
+      "section": "janela"
+    },
+    {
+      "id": 5,
+      "number": 5,
+      "capacity": 2,
+      "x": 320,
+      "y": 290,
+      "radius": 46,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 6,
+      "number": 6,
+      "capacity": 2,
+      "x": 320,
+      "y": 450,
+      "radius": 46,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 7,
+      "number": 7,
+      "capacity": 2,
+      "x": 510,
+      "y": 230,
+      "radius": 46,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 8,
+      "number": 8,
+      "capacity": 2,
+      "x": 510,
+      "y": 390,
+      "radius": 46,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 9,
+      "number": 9,
+      "capacity": 2,
+      "x": 690,
+      "y": 210,
+      "radius": 46,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 10,
+      "number": 10,
+      "capacity": 5,
+      "x": 690,
+      "y": 370,
+      "radius": 58,
+      "isActive": true,
+      "section": "sala"
+    },
+    {
+      "id": 11,
+      "number": 11,
+      "capacity": 2,
+      "x": 860,
+      "y": 190,
+      "radius": 46,
+      "isActive": true,
+      "section": "balcao"
+    },
+    {
+      "id": 12,
+      "number": 12,
+      "capacity": 3,
+      "x": 860,
+      "y": 350,
+      "radius": 52,
+      "isActive": true,
+      "section": "balcao"
+    }
+  ],
+  "reservations": [
+    {
+      "id": "res-1793122407805-z64k",
+      "code": "OQP-1239",
+      "date": "2026-10-30",
+      "time": "14:00",
+      "guests": 2,
+      "tableId": 5,
+      "customerName": "Rita Martins",
+      "customerPhone": "+351934567890",
+      "customerEmail": "rita.martins@exemplo.pt",
+      "specialRequests": [],
+      "notes": "",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-27T17:33:27.805Z",
+      "source": "online",
+      "smsSent": true,
+      "smsSentAt": "2026-10-27T17:33:27.805Z",
+      "smsPhone": "+351934567890",
+      "smsMessage": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-1239 para 2026-10-30 às 14:00 (2 pax, Mesa 5). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+      "emailSent": true,
+      "emailSentAt": "2026-10-27T17:33:27.805Z",
+      "emailAddress": "rita.martins@exemplo.pt",
+      "messagesHistory": [
+        {
+          "id": "sms-1793122407805-2hu4",
+          "type": "sms",
+          "recipient": "+351934567890",
+          "message": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-1239 para 2026-10-30 às 14:00 (2 pax, Mesa 5). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+          "status": "entregue",
+          "sentAt": "2026-10-27T17:33:27.805Z",
+          "trigger": "confirmacao_reserva"
+        },
+        {
+          "id": "email-1793122407805-xdb9",
+          "type": "email",
+          "recipient": "rita.martins@exemplo.pt",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Rita Martins,\n\nA sua mesa para 2 pessoas está confirmada para 2026-10-30 às 14:00.\nCódigo de reserva: OQP-1239.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-27T17:33:27.805Z",
+          "trigger": "confirmacao_reserva"
+        },
+        {
+          "id": "sms-1793122411508-2m3a",
+          "type": "sms",
+          "recipient": "+351934567890",
+          "message": "Lembrete Qué Pasa: A sua mesa para 2 pessoas está marcada para hoje às 14:00 (Mesa 5, Código: OQP-1239). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+          "status": "entregue",
+          "sentAt": "2026-10-27T17:33:31.508Z",
+          "trigger": "lembrete"
+        }
+      ],
+      "reminderSent": true
+    },
+    {
+      "id": "res-1793122394137-g3os",
+      "code": "OQP-7367",
+      "date": "2026-10-30",
+      "time": "12:30",
+      "guests": 2,
+      "tableId": 4,
+      "customerName": "Diogo Fonseca",
+      "customerPhone": "+351912345678",
+      "customerEmail": "diogo.fonseca@exemplo.pt",
+      "specialRequests": [
+        "Aniversário"
+      ],
+      "notes": "",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-27T17:33:14.137Z",
+      "source": "online",
+      "smsSent": true,
+      "smsSentAt": "2026-10-27T17:33:14.137Z",
+      "smsPhone": "+351912345678",
+      "smsMessage": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-7367 para 2026-10-30 às 12:30 (2 pax, Mesa 4). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+      "emailSent": true,
+      "emailSentAt": "2026-10-27T17:33:14.137Z",
+      "emailAddress": "diogo.fonseca@exemplo.pt",
+      "messagesHistory": [
+        {
+          "id": "sms-1793122394137-1cht",
+          "type": "sms",
+          "recipient": "+351912345678",
+          "message": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-7367 para 2026-10-30 às 12:30 (2 pax, Mesa 4). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+          "status": "entregue",
+          "sentAt": "2026-10-27T17:33:14.137Z",
+          "trigger": "confirmacao_reserva"
+        },
+        {
+          "id": "email-1793122394137-na2i",
+          "type": "email",
+          "recipient": "diogo.fonseca@exemplo.pt",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Diogo Fonseca,\n\nA sua mesa para 2 pessoas está confirmada para 2026-10-30 às 12:30.\nCódigo de reserva: OQP-7367.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-27T17:33:14.137Z",
+          "trigger": "confirmacao_reserva"
+        }
+      ]
+    },
+    {
+      "id": "res-1793031656541-j27b",
+      "code": "OQP-7253",
+      "date": "2026-11-20",
+      "time": "12:30",
+      "guests": 2,
+      "tableId": 4,
+      "customerName": "Maria Santos",
+      "customerPhone": "+351 912 999 888",
+      "customerEmail": "maria.santos@exemplo.pt",
+      "specialRequests": [],
+      "notes": "",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-26T16:20:56.541Z",
+      "source": "online",
+      "smsSent": true,
+      "smsSentAt": "2026-10-26T16:21:00.631Z",
+      "smsPhone": "+351 912 999 888",
+      "smsMessage": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-7253 para 2026-11-20 às 12:30 (2 pax, Mesa 4). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+      "emailSent": true,
+      "emailSentAt": "2026-10-26T16:21:00.631Z",
+      "emailAddress": "maria.santos@exemplo.pt",
+      "messagesHistory": [
+        {
+          "id": "sms-1793031656541-u2vc",
+          "type": "sms",
+          "recipient": "+351 912 999 888",
+          "message": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-7253 para 2026-11-20 às 12:30 (2 pax, Mesa 4). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+          "status": "entregue",
+          "sentAt": "2026-10-26T16:20:56.541Z",
+          "trigger": "confirmacao_reserva"
+        },
+        {
+          "id": "email-1793031656541-q2p7",
+          "type": "email",
+          "recipient": "maria.santos@exemplo.pt",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Maria Santos,\n\nA sua mesa para 2 pessoas está confirmada para 2026-11-20 às 12:30.\nCódigo de reserva: OQP-7253.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-26T16:20:56.541Z",
+          "trigger": "confirmacao_reserva"
+        },
+        {
+          "id": "sms-1793031660631-wqtm",
+          "type": "sms",
+          "recipient": "+351 912 999 888",
+          "message": "Qué Pasa: A sua mesa está confirmada! Cod: OQP-7253 para 2026-11-20 às 12:30 (2 pax, Mesa 4). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: +351 234 382 190.",
+          "status": "entregue",
+          "sentAt": "2026-10-26T16:21:00.631Z",
+          "trigger": "manual"
+        },
+        {
+          "id": "email-1793031660631-vrlw",
+          "type": "email",
+          "recipient": "maria.santos@exemplo.pt",
+          "subject": "Confirmação da sua Reserva - Qué Pasa",
+          "message": "Caro(a) Maria Santos,\n\nA sua mesa para 2 pessoas está confirmada para 2026-11-20 às 12:30.\nCódigo de reserva: OQP-7253.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+          "status": "entregue",
+          "sentAt": "2026-10-26T16:21:00.631Z",
+          "trigger": "manual"
+        }
+      ]
+    },
+    {
+      "id": "res-1793030256572-u69b",
+      "code": "OQP-1002",
+      "date": "2026-11-15",
+      "time": "12:30",
+      "guests": 2,
+      "tableId": 4,
+      "customerName": "Carlos Silva",
+      "customerPhone": "+351 912345678",
+      "customerEmail": "carlos@exemplo.pt",
+      "specialRequests": [],
+      "notes": "",
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-26T15:57:36.572Z",
+      "source": "online"
+    },
+    {
+      "id": "res-1",
+      "code": "OQP-7101",
+      "date": "2026-10-25",
+      "time": "12:30",
+      "guests": 2,
+      "tableId": 1,
+      "customerName": "Gonçalo Ribeiro",
+      "customerPhone": "+351 912 345 678",
+      "customerEmail": "goncalo.ribeiro@exemplo.pt",
+      "specialRequests": [
+        "Mesa junto à janela"
+      ],
+      "status": "concluida",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-23T18:54:56.867Z",
+      "source": "online"
+    },
+    {
+      "id": "res-2",
+      "code": "OQP-7102",
+      "date": "2026-10-25",
+      "time": "13:00",
+      "guests": 4,
+      "tableId": 10,
+      "customerName": "Mariana Cerqueira",
+      "customerPhone": "+351 934 892 110",
+      "customerEmail": "marianacerqueira@exemplo.pt",
+      "specialRequests": [
+        "Cadeira de bebé"
+      ],
+      "status": "sentada",
+      "durationMinutes": 105,
+      "createdAt": "2026-10-22T18:54:56.867Z",
+      "source": "online",
+      "internalNotes": "Cliente habitual, aprecia vinhos da Bairrada."
+    },
+    {
+      "id": "res-3",
+      "code": "OQP-7103",
+      "date": "2026-10-25",
+      "time": "13:30",
+      "guests": 3,
+      "tableId": 2,
+      "customerName": "Tiago Fontes",
+      "customerPhone": "+351 961 773 402",
+      "customerEmail": "tiagofontes@exemplo.pt",
+      "specialRequests": [
+        "Alergia a marisco"
+      ],
+      "status": "chegou",
+      "durationMinutes": 105,
+      "createdAt": "2026-10-24T18:54:56.867Z",
+      "source": "telefone"
+    },
+    {
+      "id": "res-4",
+      "code": "OQP-7104",
+      "date": "2026-10-25",
+      "time": "20:00",
+      "guests": 2,
+      "tableId": 12,
+      "customerName": "Sofia Albuquerque",
+      "customerPhone": "+351 925 410 889",
+      "customerEmail": "sofia.albuquerque@exemplo.pt",
+      "specialRequests": [
+        "Aniversário"
+      ],
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-25T13:54:56.867Z",
+      "source": "online"
+    },
+    {
+      "id": "res-5",
+      "code": "OQP-7105",
+      "date": "2026-10-25",
+      "time": "20:30",
+      "guests": 2,
+      "tableId": 7,
+      "customerName": "Duarte Mendonça",
+      "customerPhone": "+351 919 663 201",
+      "customerEmail": "duarte.mendonca@exemplo.pt",
+      "specialRequests": [
+        "Mobilidade reduzida"
+      ],
+      "status": "confirmada",
+      "durationMinutes": 105,
+      "createdAt": "2026-10-25T10:54:56.867Z",
+      "source": "online"
+    },
+    {
+      "id": "res-6",
+      "code": "OQP-7106",
+      "date": "2026-10-25",
+      "time": "21:00",
+      "guests": 5,
+      "tableId": 1,
+      "customerName": "Beatriz Vasconcelos",
+      "customerPhone": "+351 938 120 445",
+      "customerEmail": "beatriz.v@exemplo.pt",
+      "specialRequests": [
+        "Jantar de celebração"
+      ],
+      "status": "confirmada",
+      "durationMinutes": 120,
+      "createdAt": "2026-10-21T18:54:56.867Z",
+      "source": "online"
+    },
+    {
+      "id": "res-7",
+      "code": "OQP-7107",
+      "date": "2026-10-26",
+      "time": "13:00",
+      "guests": 3,
+      "tableId": 3,
+      "customerName": "Helena Pires",
+      "customerPhone": "+351 966 332 109",
+      "customerEmail": "helena.pires@exemplo.pt",
+      "specialRequests": [],
+      "status": "confirmada",
+      "durationMinutes": 105,
+      "createdAt": "2026-10-25T18:54:56.867Z",
+      "source": "online"
+    },
+    {
+      "id": "res-8",
+      "code": "OQP-7108",
+      "date": "2026-10-26",
+      "time": "20:00",
+      "guests": 2,
+      "tableId": 4,
+      "customerName": "Pedro Antunes",
+      "customerPhone": "+351 917 882 133",
+      "customerEmail": "pedroantunes@exemplo.pt",
+      "specialRequests": [
+        "Aniversário de casamento"
+      ],
+      "status": "confirmada",
+      "durationMinutes": 90,
+      "createdAt": "2026-10-25T18:54:56.867Z",
+      "source": "online"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-1",
+      "name": "Mariana Cerqueira",
+      "phone": "+351 934 892 110",
+      "email": "marianacerqueira@exemplo.pt",
+      "isVip": true,
+      "visitsCount": 8,
+      "noShowCount": 0,
+      "allergies": [
+        "Frutos secos"
+      ],
+      "internalNotes": "Cliente assídua, prefere mesas junto à janela.",
+      "lastVisit": "2026-10-25",
+      "gdprConsentDate": "2026-02-10T14:30:00Z"
+    },
+    {
+      "id": "cust-2",
+      "name": "Gonçalo Ribeiro",
+      "phone": "+351 912 345 678",
+      "email": "goncalo.ribeiro@exemplo.pt",
+      "isVip": false,
+      "visitsCount": 7,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "Almoça habitualmente à sexta-feira.",
+      "lastVisit": "2026-11-02",
+      "gdprConsentDate": "2026-03-01T10:20:00Z"
+    },
+    {
+      "id": "cust-3",
+      "name": "Beatriz Vasconcelos",
+      "phone": "+351 938 120 445",
+      "email": "beatriz.v@exemplo.pt",
+      "isVip": true,
+      "visitsCount": 12,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "Organiza jantares de empresa. Atendimento prioritário.",
+      "lastVisit": "2026-10-25",
+      "gdprConsentDate": "2026-01-15T09:15:00Z"
+    },
+    {
+      "id": "cust-1793031656542",
+      "name": "Maria Santos",
+      "phone": "+351 912 999 888",
+      "email": "maria.santos@exemplo.pt",
+      "isVip": false,
+      "visitsCount": 1,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "",
+      "lastVisit": "2026-11-20",
+      "gdprConsentDate": "2026-10-26T16:20:56.542Z"
+    },
+    {
+      "id": "cust-1793122407806",
+      "name": "Rita Martins",
+      "phone": "+351934567890",
+      "email": "rita.martins@exemplo.pt",
+      "isVip": false,
+      "visitsCount": 1,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "",
+      "lastVisit": "2026-10-30",
+      "gdprConsentDate": "2026-10-27T17:33:27.806Z"
+    },
+    {
+      "id": "cust-1793124858395",
+      "name": "Simão Teste",
+      "phone": "+351925225156",
+      "email": "simaofilipe2005@gmail.com",
+      "isVip": false,
+      "visitsCount": 1,
+      "noShowCount": 0,
+      "allergies": [],
+      "internalNotes": "",
+      "lastVisit": "2026-11-01",
+      "gdprConsentDate": "2026-10-27T18:14:18.395Z"
+    }
+  ],
+  "waitlist": [],
+  "settings": {
+    "restaurantName": "Qué Pasa",
+    "tagline": "Cozinha de Autor & Petiscos Contemporâneos",
+    "address": "Cais dos Mercantéis, nº 14 (Bairro da Beira-Mar)",
+    "city": "Aveiro",
+    "postalCode": "3800-228",
+    "phone": "+351 234 382 190",
+    "email": "reservas@quepasa.pt",
+    "schedule": [
+      {
+        "dayOfWeek": 0,
+        "dayName": "Domingo",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "22:30"
+      },
+      {
+        "dayOfWeek": 1,
+        "dayName": "Segunda-feira",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      },
+      {
+        "dayOfWeek": 2,
+        "dayName": "Terça-feira",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      },
+      {
+        "dayOfWeek": 3,
+        "dayName": "Quarta-feira",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      },
+      {
+        "dayOfWeek": 4,
+        "dayName": "Quinta-feira",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      },
+      {
+        "dayOfWeek": 5,
+        "dayName": "Sexta-feira",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      },
+      {
+        "dayOfWeek": 6,
+        "dayName": "Sábado",
+        "isOpen": true,
+        "lunchStart": "12:30",
+        "lunchEnd": "15:30",
+        "dinnerStart": "19:30",
+        "dinnerEnd": "23:00"
+      }
+    ],
+    "closedDates": [],
+    "durationsByPax": [
+      {
+        "minPax": 1,
+        "maxPax": 5,
+        "durationMin": 90
+      }
+    ],
+    "cleaningBufferMinutes": 0,
+    "minAdvanceHours": 1,
+    "maxAdvanceDays": 60,
+    "noShowGraceMinutes": 20,
+    "emailTemplates": {
+      "confirmationSubject": "Confirmação da sua Reserva - Qué Pasa",
+      "confirmationBody": "Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está confirmada para {DATA} às {HORA}.\nCódigo de reserva: {CODIGO}.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa",
+      "reminderSubject": "Lembrete da sua Reserva amanhã - Qué Pasa",
+      "reminderBody": "Olá {NOME},\n\nLembramos que tem reserva amanhã ({DATA}) às {HORA} para {PESSOAS} pessoas (Mesa {MESA}).\nPor favor confirme ou faça a gestão da sua reserva no nosso website com o código {CODIGO}.\n\nAguardamos por si!",
+      "cancellationSubject": "Cancelamento de Reserva - Qué Pasa",
+      "cancellationBody": "Olá {NOME},\n\nA sua reserva {CODIGO} para {DATA} às {HORA} foi cancelada com sucesso.\nEsperamos ter o prazer de o receber numa próxima oportunidade em Aveiro.",
+      "ownerNewBookingSubject": "Alerta de Nova Reserva - Qué Pasa",
+      "ownerNewBookingBody": "Caro Dono,\n\nEntrou uma nova reserva no sistema:\nCódigo: {CODIGO}\nCliente: {NOME}\nTelemóvel: {TELEMOVEL}\nData e Hora: {DATA} às {HORA}\nMesa: {MESA} ({PESSOAS} pax)\nPedidos: {PEDIDOS}"
+    },
+    "ownerEmail": "dono@quepasa.pt"
+  },
+  "blockedPeriods": [
+    {
+      "id": "block-1",
+      "type": "horario",
+      "date": "2026-10-26",
+      "startTime": "15:30",
+      "endTime": "19:30",
+      "tableId": null,
+      "reason": "Pausa da equipa de sala e preparação de turno",
+      "createdAt": "2026-10-25T18:54:56.867Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1793122407806",
+      "title": "Nova Reserva Recebida!",
+      "message": "Rita Martins reservou para 2 pessoas a 2026-10-30 às 14:00 (Mesa 5).",
+      "reservationId": "res-1793122407805-z64k",
+      "reservationCode": "OQP-1239",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-27T17:33:27.806Z"
+    },
+    {
+      "id": "notif-1793122394137",
+      "title": "Nova Reserva Recebida!",
+      "message": "Diogo Fonseca reservou para 2 pessoas a 2026-10-30 às 12:30 (Mesa 4).",
+      "reservationId": "res-1793122394137-g3os",
+      "reservationCode": "OQP-7367",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-27T17:33:14.137Z"
+    },
+    {
+      "id": "notif-1793031656542",
+      "title": "Nova Reserva Recebida!",
+      "message": "Maria Santos reservou para 2 pessoas a 2026-11-20 às 12:30 (Mesa 4).",
+      "reservationId": "res-1793031656541-j27b",
+      "reservationCode": "OQP-7253",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-26T16:20:56.542Z"
+    },
+    {
+      "id": "notif-1793030256573",
+      "title": "Nova Reserva Recebida!",
+      "message": "Carlos Silva reservou para 2 pessoas a 2026-11-15 às 12:30 (Mesa 4).",
+      "reservationId": "res-1793030256572-u69b",
+      "reservationCode": "OQP-1002",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-26T15:57:36.573Z"
+    },
+    {
+      "id": "notif-1",
+      "title": "Nova Reserva Online",
+      "message": "Duarte Mendonça reservou para 4 pessoas hoje às 20:30 (Mesa 7).",
+      "reservationId": "res-5",
+      "reservationCode": "OQP-7105",
+      "isRead": false,
+      "emailSentToOwner": true,
+      "createdAt": "2026-10-25T10:54:56.867Z"
+    }
+  ],
+  "holds": [
+    {
+      "tableId": 10,
+      "date": "2026-10-25",
+      "time": "12:30",
+      "expiresAt": 1792955524692,
+      "sessionId": "_r_0_"
+    },
+    {
+      "tableId": 8,
+      "date": "2026-10-25",
+      "time": "12:30",
+      "expiresAt": 1792955525267,
+      "sessionId": "_r_0_"
+    },
+    {
+      "tableId": 7,
+      "date": "2026-10-25",
+      "time": "12:30",
+      "expiresAt": 1792955525337,
+      "sessionId": "_r_0_"
+    }
+  ],
+  "ownerAuth": {
+    "username": "dono@barbaazul.pt",
+    "passwordHash": "9b4b99386a6a420923e1e971e8774469032641a493ee96e4e1596cc3a6433250"
+  }
+}

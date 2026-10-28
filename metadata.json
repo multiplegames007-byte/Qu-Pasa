@@ -1,0 +1,6 @@
+{
+  "name": "o que pasa by Barba Azul - Reservas",
+  "description": "Sistema de gestão de reservas e planta interativa de mesas do restaurante o que pasa by Barba Azul, Aveiro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

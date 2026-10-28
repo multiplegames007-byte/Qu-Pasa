@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-titulo: 'DM Serif Display', Georgia, serif;
+    --font-texto: 'DM Sans', system-ui, sans-serif;
+    --font-londrina: 'Londrina Solid', cursive, sans-serif;
+
+    /* Legacy compatibility mappings */
+    --font-serif: var(--font-titulo);
+    --font-sans: var(--font-texto);
+  }
+
+  body {
+    font-family: var(--font-texto);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Altura de linha de 1.2 nos títulos e uso exclusivo de --font-titulo */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  /* Tamanho mínimo de 16px nos campos de formulário no telemóvel para evitar zoom no iPhone */
+  input, select, textarea {
+    font-family: var(--font-texto);
+    font-size: 16px !important;
+  }
+}
+
+/* Classes de Tipografia Semântica baseadas em variáveis */
+.font-titulo {
+  font-family: var(--font-titulo);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.font-texto {
+  font-family: var(--font-texto);
+  line-height: 1.5;
+}
+
+/* Fallback aliases to guarantee 100% unified font application */
+.font-serif-display {
+  font-family: var(--font-titulo);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.font-sans {
+  font-family: var(--font-texto);
+}
+
+.font-londrina {
+  font-family: var(--font-londrina);
+}
+
+/* ========================================================================== */
+/* PÁGINA DO CLIENTE                                                         */
+/* ========================================================================== */
+
+/* Nome do restaurante / logótipo: DM Serif Display, 32-40px */
+.cliente-logo {
+  font-family: var(--font-titulo);
+  font-size: clamp(32px, 4vw, 40px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Títulos de cada passo: DM Serif Display, 24-28px */
+.cliente-titulo-passo {
+  font-family: var(--font-titulo);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Mensagem de sucesso ("Reserva confirmada!"): DM Serif Display, 28-32px */
+.cliente-sucesso {
+  font-family: var(--font-titulo);
+  font-size: clamp(28px, 3.5vw, 32px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Subtítulos e legendas: DM Sans 500, 16-18px */
+.cliente-subtitulo {
+  font-family: var(--font-texto);
+  font-weight: 500;
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.4;
+}
+
+/* Texto corrente e instruções: DM Sans 400, 16px */
+.cliente-texto {
+  font-family: var(--font-texto);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Números do calendário e botões de horário: DM Sans 500, 15-16px */
+.cliente-calendario-num,
+.cliente-horario-num {
+  font-family: var(--font-texto);
+  font-weight: 500;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Números das mesas na planta: DM Sans 700, 14-16px */
+.cliente-mesa-num {
+  font-family: var(--font-texto);
+  font-weight: 700;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Campos do formulário e etiquetas: DM Sans 400/500, 16px */
+.cliente-label {
+  font-family: var(--font-texto);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+/* Botões ("Continuar", "Confirmar reserva"): DM Sans 700, 16px */
+.cliente-botao {
+  font-family: var(--font-texto);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Mensagens de erro: DM Sans 500, 14px */
+.cliente-erro {
+  font-family: var(--font-texto);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Código da reserva: DM Sans 700, 24px, com espaçamento entre letras */
+.cliente-codigo {
+  font-family: var(--font-texto);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.15em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================================================== */
+/* DASHBOARD DO DONO                                                          */
+/* ========================================================================== */
+
+/* Título do dashboard: DM Serif Display, 28px */
+.dashboard-titulo {
+  font-family: var(--font-titulo);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Títulos de secção: DM Sans 700, 18-20px */
+.dashboard-seccao {
+  font-family: var(--font-texto);
+  font-size: clamp(18px, 2.2vw, 20px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Tabelas e listas de reservas: DM Sans 400, 14-15px */
+.dashboard-tabela-corpo {
+  font-family: var(--font-texto);
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Cabeçalhos de tabela: DM Sans 700, 13px, maiúsculas */
+.dashboard-tabela-header {
+  font-family: var(--font-texto);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Números das estatísticas: DM Sans 700, 32px */
+.dashboard-estatistica-num {
+  font-family: var(--font-texto);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Horas e números em tabelas: DM Sans 500 com font-variant-numeric: tabular-nums */
+.dashboard-hora-num {
+  font-family: var(--font-texto);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Filtros, pesquisa e definições: DM Sans 400/500, 14-15px */
+.dashboard-filtro {
+  font-family: var(--font-texto);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+/* Botões de ação: DM Sans 700, 14px */
+.dashboard-botao {
+  font-family: var(--font-texto);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Etiquetas de estado (pendente, confirmada, cancelada): DM Sans 700, 12px, maiúsculas */
+.dashboard-badge {
+  font-family: var(--font-texto);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Horas e números com variant numérico tabular */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom touch and drag behavior */
+.touch-none-action {
+  touch-action: none;
+}
+

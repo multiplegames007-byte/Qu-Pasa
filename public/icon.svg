@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#071526"/>
+      <stop offset="50%" stop-color="#0B2545"/>
+      <stop offset="100%" stop-color="#13315C"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#F59E0B" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Outer subtle nautical ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#F59E0B" stroke-width="3" stroke-opacity="0.3" stroke-dasharray="12 8"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.2"/>
+
+  <!-- Compass / Steering Wheel Elements -->
+  <g filter="url(#glow)">
+    <!-- Central Table / Navigation Core Circle -->
+    <circle cx="256" cy="256" r="110" fill="#0B1C33" stroke="url(#goldGrad)" stroke-width="7"/>
+    <circle cx="256" cy="256" r="94" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+    <!-- 12 Chairs representing the 12 circular tables of the restaurant -->
+    <!-- Positioned around 256,256 with radius 146 -->
+    <circle cx="256" cy="110" r="12" fill="url(#goldGrad)"/>
+    <circle cx="329" cy="129" r="12" fill="url(#goldGrad)"/>
+    <circle cx="382" cy="183" r="12" fill="url(#goldGrad)"/>
+    <circle cx="402" cy="256" r="12" fill="url(#goldGrad)"/>
+    <circle cx="382" cy="329" r="12" fill="url(#goldGrad)"/>
+    <circle cx="329" cy="382" r="12" fill="url(#goldGrad)"/>
+    <circle cx="256" cy="402" r="12" fill="url(#goldGrad)"/>
+    <circle cx="183" cy="382" r="12" fill="url(#goldGrad)"/>
+    <circle cx="129" cy="329" r="12" fill="url(#goldGrad)"/>
+    <circle cx="110" cy="256" r="12" fill="url(#goldGrad)"/>
+    <circle cx="129" cy="183" r="12" fill="url(#goldGrad)"/>
+    <circle cx="183" cy="129" r="12" fill="url(#goldGrad)"/>
+
+    <!-- Central Compass Star -->
+    <polygon points="256,166 270,242 346,256 270,270 256,346 242,270 166,256 242,242" fill="url(#goldGrad)"/>
+    <polygon points="256,190 264,248 322,256 264,264 256,322 248,264 190,256 248,248" fill="#FDE68A"/>
+    <circle cx="256" cy="256" r="14" fill="#071526" stroke="#F59E0B" stroke-width="3"/>
+  </g>
+
+  <!-- Typography: BA / OQP -->
+  <text x="256" y="456" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="28" fill="#F1F5F9" letter-spacing="4">
+    BARBA AZUL
+  </text>
+  <text x="256" y="482" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#F59E0B" letter-spacing="6">
+    AVEIRO · 12 MESAS
+  </text>
+</svg>
