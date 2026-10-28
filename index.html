@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Qué Pasa · Reservas · Aveiro</title>
-    <meta name="description" content="Reserve a sua mesa no restaurante Qué Pasa, em Aveiro. Cozinha de autor e petiscos contemporâneos à beira dos canais." />
+    <title>o que pasa by Barba Azul - Reservas</title>
+    <meta name="description" content="Sistema de gestão de reservas e planta interativa de mesas do restaurante o que pasa by Barba Azul, Aveiro." />
     <meta name="theme-color" content="#071526" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -13,10 +13,25 @@
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta property="og:title" content="Qué Pasa · Reservas" />
-    <meta property="og:description" content="Sistema oficial de reservas do restaurante Qué Pasa em Aveiro." />
+    <meta property="og:title" content="o que pasa by Barba Azul - Reservas" />
+    <meta property="og:description" content="Sistema de gestão de reservas e planta interativa de mesas do restaurante o que pasa by Barba Azul, Aveiro." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Safe guard for HMR WebSockets in proxy container environments
+      window.addEventListener('error', function(e) {
+        if (e && (e.message?.includes?.('WebSocket') || e.filename?.includes?.('@vite/client'))) {
+          e.preventDefault?.();
+          e.stopImmediatePropagation?.();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e && (String(e.reason).includes('WebSocket') || e.reason?.message?.includes?.('WebSocket'))) {
+          e.preventDefault?.();
+          e.stopImmediatePropagation?.();
+        }
+      }, true);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=DM+Serif+Display:ital@0;1&family=Londrina+Solid:wght@300;400;900&display=swap" rel="stylesheet">

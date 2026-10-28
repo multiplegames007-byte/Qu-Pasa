@@ -37,6 +37,7 @@ import {
   sendPublicReminder
 } from '../services/api.ts';
 import {
+  INITIAL_TABLES,
   getDurationForGuests,
   generateIcsFile,
   getTodayStr,
@@ -60,7 +61,7 @@ interface BookingWizardProps {
 
 export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHome, onBackToLanding }) => {
   const sessionId = useId();
-  const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [tables, setTables] = useState<RestaurantTable[]>(INITIAL_TABLES);
   const [config, setConfig] = useState<Partial<RestaurantSettings>>({
     restaurantName: 'Qué Pasa',
     phone: '234 424 208',
@@ -214,7 +215,15 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
   // Initial load of tables and config
   useEffect(() => {
-    fetchPublicTables().then(setTables).catch(console.error);
+    fetchPublicTables()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTables(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Mesas locais em uso:', err);
+      });
     fetchPublicConfig()
       .then((cfg) => {
         setConfig(cfg);
@@ -855,12 +864,15 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
           </div>
 
           {/* Quick Table Buttons (Touch friendly on mobile & desktop) */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between text-xs text-slate-600">
-              <span className="font-semibold text-slate-700">Mesas para {guests} pessoas:</span>
-              <span className="text-[11px] text-slate-400">Toque numa mesa</span>
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Mesas Disponíveis ({tables.length} mesas na sala):</span>
+              </span>
+              <span className="text-[11px] text-slate-500">Selecione na lista ou na planta</span>
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {tables.map((t) => {
                 const avail = tableAvailabilityMap[t.id];
                 const isFree = avail ? avail.isFree : true;
@@ -873,16 +885,18 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
                     type="button"
                     disabled={!isClickable}
                     onClick={() => handleSelectTable(t)}
-                    className={`py-2 px-1.5 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center justify-center border ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center justify-center border cursor-pointer active:scale-95 ${
                       isSelected
-                        ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-400/40 scale-[1.02]'
+                        ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-md ring-2 ring-amber-400 scale-[1.03]'
                         : isClickable
-                        ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100 cursor-pointer'
+                        ? 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-xs'
                         : 'bg-slate-100 text-slate-400 border-slate-200 opacity-60 cursor-not-allowed'
                     }`}
                   >
-                    <span className="text-sm font-extrabold">Mesa {t.number}</span>
-                    <span className="text-[10px] font-semibold opacity-90">{t.capacity} lug.</span>
+                    <span className="text-sm font-black">Mesa {t.number}</span>
+                    <span className="text-[10px] font-semibold opacity-90 mt-0.5">
+                      {t.capacity} lug. {t.section === 'janela' ? '· Janela' : t.section === 'balcao' ? '· Balcão' : '· Sala'}
+                    </span>
                   </button>
                 );
               })}

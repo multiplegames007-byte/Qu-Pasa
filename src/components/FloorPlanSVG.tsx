@@ -94,17 +94,16 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
       return { color: '#EF4444', statusText: 'Ocupada / Reservada neste turno', isClickable: false, badge: 'Ocupada' };
     }
 
-    // Check capacity for customer party size
-    if (requiredGuests > table.capacity) {
-      return {
-        color: '#64748B',
-        statusText: `Capacidade insuficiente (${table.capacity} lugares para ${requiredGuests} pessoas)`,
-        isClickable: false,
-        badge: `Máx ${table.capacity} pax`,
-      };
-    }
-
-    return { color: '#10B981', statusText: 'Livre', isClickable: true };
+    // Available free table
+    const isSuitable = table.capacity >= requiredGuests;
+    return {
+      color: '#10B981',
+      statusText: isSuitable
+        ? `Disponível (${table.capacity} lugares)`
+        : `Disponível (${table.capacity} lugares para ${requiredGuests} pessoas)`,
+      isClickable: true,
+      badge: `${table.capacity} pax`,
+    };
   };
 
   // Helper for management mode table color & status

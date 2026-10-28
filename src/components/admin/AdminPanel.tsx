@@ -57,7 +57,7 @@ import {
   saveOwnerSettings,
   ownerLogout
 } from '../../services/api.ts';
-import { getTodayStr, exportReservationsToCsv } from '../../services/storage.ts';
+import { INITIAL_TABLES, getTodayStr, exportReservationsToCsv } from '../../services/storage.ts';
 import { FloorPlanSVG } from '../FloorPlanSVG.tsx';
 import { ManualReservationModal } from './ManualReservationModal.tsx';
 import { TableDetailModal } from './TableDetailModal.tsx';
@@ -91,7 +91,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Core Data States
-  const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [tables, setTables] = useState<RestaurantTable[]>(INITIAL_TABLES);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [settings, setSettings] = useState<RestaurantSettings | null>(null);
