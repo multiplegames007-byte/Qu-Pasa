@@ -33,8 +33,18 @@ import {
   Filter,
   Eye,
   MapPin,
-  ExternalLink
+  ExternalLink,
+  Database,
+  Copy
 } from 'lucide-react';
+import {
+  supabase,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  SUPABASE_SETUP_SQL,
+  testSupabaseConnection,
+  bulkSyncAllToSupabase
+} from '../../services/supabase.ts';
 import {
   UserAccount,
   RestaurantTable,
@@ -148,6 +158,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   // Webhook Test State
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
 
+  // Supabase Database Integration State
+  const [isTestingSupabase, setIsTestingSupabase] = useState(false);
+  const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<{
+    connected: boolean;
+    hasTables: boolean;
+    message: string;
+    details?: Record<string, boolean>;
+  } | null>(null);
+  const [showSqlModal, setShowSqlModal] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
   // Push notifications permission
   const [pushEnabled, setPushEnabled] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
@@ -157,6 +179,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Supabase Handlers
+  const handleTestSupabase = async () => {
+    setIsTestingSupabase(true);
+    try {
+      const res = await testSupabaseConnection();
+      setSupabaseStatus(res);
+      showToast(res.message);
+    } catch {
+      showToast('Erro ao contactar o Supabase.');
+    } finally {
+      setIsTestingSupabase(false);
+    }
+  };
+
+  const handleSyncSupabase = async () => {
+    setIsSyncingSupabase(true);
+    try {
+      const res = await bulkSyncAllToSupabase(reservations, customers);
+      showToast(res.message);
+    } catch (err: any) {
+      showToast(err.message || 'Falha ao sincronizar com Supabase.');
+    } finally {
+      setIsSyncingSupabase(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+      setCopiedSql(true);
+      showToast('Script SQL copiado com sucesso!');
+      setTimeout(() => setCopiedSql(false), 3000);
+    }
   };
 
   // Google Auth lifecycle
@@ -2158,6 +2215,113 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           {/* ======================================================================= */}
           {activeSection === 'configuracoes' && settings && (
             <div className="space-y-6 font-sans">
+              {/* Supabase Database Integration Card */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+                      <Database className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-base text-slate-900">Base de Dados Supabase (PostgreSQL)</h4>
+                        <span className="font-sans font-bold text-[10px] uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          {supabaseStatus?.connected ? 'Conectado' : 'Configurado'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Armazenamento e sincronização na cloud com a instância PostgreSQL do Supabase.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleTestSupabase}
+                      disabled={isTestingSupabase}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                      title="Testar Conexão Supabase"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isTestingSupabase ? 'animate-spin' : ''}`} />
+                      <span>{isTestingSupabase ? 'A verificar...' : 'Testar Conexão'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSyncSupabase}
+                      disabled={isSyncingSupabase}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                      title="Sincronizar reservas e clientes locais com o Supabase"
+                    >
+                      <Database className={`w-3.5 h-3.5 ${isSyncingSupabase ? 'animate-pulse' : ''}`} />
+                      <span>{isSyncingSupabase ? 'A sincronizar...' : 'Sincronizar Dados'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSqlModal(true)}
+                      className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                      title="Ver script SQL para criar as tabelas no Supabase"
+                    >
+                      <span>Ver Script SQL</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Connection details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Supabase Project URL
+                    </span>
+                    <span className="font-mono text-slate-800 break-all select-all font-semibold">
+                      {SUPABASE_URL}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Anon / Publishable API Key
+                    </span>
+                    <span className="font-mono text-slate-800 break-all select-all font-semibold">
+                      {SUPABASE_ANON_KEY.substring(0, 16)}...{SUPABASE_ANON_KEY.substring(SUPABASE_ANON_KEY.length - 8)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Connection Test Status Banner if triggered */}
+                {supabaseStatus && (
+                  <div
+                    className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                      supabaseStatus.connected
+                        ? supabaseStatus.hasTables
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                        : 'bg-rose-50 border-rose-200 text-rose-900'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold">{supabaseStatus.message}</p>
+                      {supabaseStatus.details && (
+                        <div className="flex gap-4 text-[11px] mt-1">
+                          <span>
+                            Reservas: <strong>{supabaseStatus.details.reservations ? '✓ Criada' : '✗ Não encontrada'}</strong>
+                          </span>
+                          <span>
+                            Clientes: <strong>{supabaseStatus.details.customers ? '✓ Criada' : '✗ Não encontrada'}</strong>
+                          </span>
+                          <span>
+                            Mesas: <strong>{supabaseStatus.details.tables ? '✓ Criada' : '✗ Não encontrada'}</strong>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Webhook n8n Integration Status */}
               <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -2339,6 +2503,76 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
         customerName={selectedReservationForGmail?.customerName || ''}
         isSending={isSendingGmail}
       />
+
+      {/* Modal: Script SQL Supabase */}
+      {showSqlModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up font-sans">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <Database className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">Script SQL para o Supabase</h3>
+                  <p className="text-xs text-slate-500">Copie e execute no SQL Editor do seu projeto Supabase</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSqlModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
+              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                <p className="font-bold">Instruções para ativar as tabelas no Supabase:</p>
+                <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-amber-800">
+                  <li>Abra o dashboard do Supabase (supabase.com/dashboard)</li>
+                  <li>Selecione o projeto <strong>vuyzzmjjbedkuqxjzayr</strong></li>
+                  <li>No menu esquerdo, clique no ícone <strong>SQL Editor</strong></li>
+                  <li>Cole o código abaixo e clique no botão verde <strong>Run</strong></li>
+                </ol>
+              </div>
+
+              <div className="relative">
+                <pre className="p-4 bg-slate-900 text-slate-200 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-80 leading-relaxed">
+                  {SUPABASE_SETUP_SQL}
+                </pre>
+                <button
+                  type="button"
+                  onClick={handleCopySql}
+                  className="absolute top-3 right-3 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedSql ? 'Copiado!' : 'Copiar SQL'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCopySql}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>{copiedSql ? 'Copiado!' : 'Copiar Código SQL'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSqlModal(false)}
+                className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 cursor-pointer transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

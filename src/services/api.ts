@@ -10,6 +10,7 @@ import {
   TemporaryTableHold
 } from '../types/index.ts';
 import { addReservation } from './storage.ts';
+import { syncReservationToSupabase } from './supabase.ts';
 
 const TOKEN_KEY = 'oqp_owner_token_v2';
 
@@ -95,6 +96,7 @@ export async function submitPublicReservation(data: {
     if (res.ok) {
       const json = await res.json();
       if (json.reservation) {
+        syncReservationToSupabase(json.reservation).catch(() => {});
         return json.reservation;
       }
     }
@@ -117,6 +119,7 @@ export async function submitPublicReservation(data: {
     durationMinutes: 90,
     source: 'online',
   });
+  syncReservationToSupabase(local).catch(() => {});
   return local;
 }
 
@@ -245,7 +248,9 @@ export async function updateOwnerReservation(id: string, updates: Partial<Reserv
     body: JSON.stringify(updates),
   });
   if (!res.ok) throw new Error('Falha ao atualizar reserva');
-  return res.json();
+  const updated = await res.json();
+  syncReservationToSupabase(updated).catch(() => {});
+  return updated;
 }
 
 export async function deleteOwnerReservation(id: string): Promise<void> {

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import twilio from 'twilio';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import {
   RestaurantTable,
   Reservation,
@@ -373,6 +374,46 @@ if (smtpHost && smtpUser && smtpPass) {
     });
   } catch (err) {
     console.warn('Could not initialize nodemailer transporter:', err);
+  }
+}
+
+// Supabase Database Integration
+const SUPABASE_DEFAULT_URL = 'https://vuyzzmjjbedkuqxjzayr.supabase.co';
+const SUPABASE_DEFAULT_ANON_KEY = 'sb_publishable_Id4n8Ocw1pa45B3uvb_1kg_CZt99b4m';
+
+const supabaseUrl = process.env.SUPABASE_URL || SUPABASE_DEFAULT_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || SUPABASE_DEFAULT_ANON_KEY;
+
+const supabaseServer = createSupabaseClient(supabaseUrl, supabaseKey);
+
+async function syncReservationToSupabaseServer(res: Reservation) {
+  try {
+    const row = {
+      id: res.id,
+      code: res.code,
+      date: res.date,
+      time: res.time,
+      guests: res.guests,
+      table_id: res.tableId,
+      customer_name: res.customerName,
+      customer_phone: res.customerPhone,
+      customer_email: res.customerEmail || '',
+      special_requests: res.specialRequests || [],
+      notes: res.notes || '',
+      internal_notes: res.internalNotes || '',
+      status: res.status,
+      duration_minutes: res.durationMinutes || 90,
+      source: res.source || 'online',
+      created_at: res.createdAt || new Date().toISOString(),
+    };
+    const { error } = await supabaseServer.from('reservations').upsert(row, { onConflict: 'id' });
+    if (error) {
+      console.warn(`[SUPABASE SERVER SYNC] Tabela 'reservations' no Supabase: ${error.message}`);
+    } else {
+      console.log(`[SUPABASE SERVER SYNC] Reserva ${res.code} sincronizada com sucesso no Supabase!`);
+    }
+  } catch (err: any) {
+    console.warn('[SUPABASE SERVER SYNC EXCEPTION]', err?.message);
   }
 }
 
@@ -1220,6 +1261,9 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
     console.error('[N8N DISPATCH ERROR]', err);
   });
 
+  // Sincronizar automaticamente com Supabase
+  syncReservationToSupabaseServer(newReservation).catch(() => {});
+
   res.status(201).json({
     success: true,
     reservation: newReservation,
@@ -1489,6 +1533,9 @@ app.post('/api/admin/reservations', requireOwnerAuth, async (req: Request, res: 
     console.error('[N8N DISPATCH ERROR]', err);
   });
 
+  // Sincronizar com Supabase
+  syncReservationToSupabaseServer(newRes).catch(() => {});
+
   res.status(201).json(newRes);
 });
 
@@ -1533,6 +1580,7 @@ app.patch('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, 
   }
 
   saveDb(state);
+  syncReservationToSupabaseServer(state.reservations[index]).catch(() => {});
   res.json(state.reservations[index]);
 });
 
@@ -1815,6 +1863,113 @@ app.post('/api/admin/reset-demo', requireOwnerAuth, (req: Request, res: Response
   const initial = getInitialDb();
   saveDb(initial);
   res.json({ success: true });
+});
+
+// Supabase Connection Status
+app.get('/api/admin/supabase/status', async (req: Request, res: Response) => {
+  try {
+    const probe = await supabaseServer.from('reservations').select('count', { count: 'exact', head: true });
+    const isTableMissing = probe.error?.code === 'PGRST205' || probe.error?.message?.includes('schema cache');
+    const isConnected = !probe.error || isTableMissing;
+
+    const checkTable = async (name: string) => {
+      const { error } = await supabaseServer.from(name).select('count', { count: 'exact', head: true });
+      return !error;
+    };
+
+    const [hasReservations, hasCustomers, hasTables] = await Promise.all([
+      checkTable('reservations'),
+      checkTable('customers'),
+      checkTable('tables'),
+    ]);
+
+    res.json({
+      url: supabaseUrl,
+      connected: isConnected,
+      hasTables: hasReservations || hasCustomers || hasTables,
+      details: {
+        reservations: hasReservations,
+        customers: hasCustomers,
+        tables: hasTables,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      url: supabaseUrl,
+      connected: false,
+      hasTables: false,
+      error: err?.message,
+    });
+  }
+});
+
+// Bulk sync server data to Supabase
+app.post('/api/admin/supabase/sync', requireOwnerAuth, async (req: Request, res: Response) => {
+  const state = loadDb();
+  let syncedReservations = 0;
+  let syncedCustomers = 0;
+  let errorMsg: string | null = null;
+
+  try {
+    if (state.reservations.length > 0) {
+      const rows = state.reservations.map((r) => ({
+        id: r.id,
+        code: r.code,
+        date: r.date,
+        time: r.time,
+        guests: r.guests,
+        table_id: r.tableId,
+        customer_name: r.customerName,
+        customer_phone: r.customerPhone,
+        customer_email: r.customerEmail || '',
+        special_requests: r.specialRequests || [],
+        notes: r.notes || '',
+        internal_notes: r.internalNotes || '',
+        status: r.status,
+        duration_minutes: r.durationMinutes || 90,
+        source: r.source || 'online',
+        created_at: r.createdAt || new Date().toISOString(),
+      }));
+
+      const { error } = await supabaseServer.from('reservations').upsert(rows, { onConflict: 'id' });
+      if (error) {
+        errorMsg = error.message;
+      } else {
+        syncedReservations = rows.length;
+      }
+    }
+
+    if (state.customers.length > 0) {
+      const rows = state.customers.map((c) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || '',
+        is_vip: Boolean(c.isVip),
+        visits_count: c.visitsCount || 1,
+        no_show_count: c.noShowCount || 0,
+        allergies: c.allergies || [],
+        internal_notes: c.internalNotes || '',
+        last_visit: c.lastVisit || '',
+      }));
+      const { error } = await supabaseServer.from('customers').upsert(rows, { onConflict: 'id' });
+      if (!error) {
+        syncedCustomers = rows.length;
+      }
+    }
+
+    res.json({
+      success: !errorMsg,
+      syncedReservations,
+      syncedCustomers,
+      error: errorMsg,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
 });
 
 /* ========================================================================== */
