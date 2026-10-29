@@ -87,7 +87,7 @@ export default function App() {
   if (viewMode === 'admin') {
     if (isVerifyingOwner) {
       return (
-        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="min-h-dvh w-full bg-slate-950 text-white flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-slate-400 font-semibold tracking-wider">
@@ -121,11 +121,11 @@ export default function App() {
   }
 
   /* ======================================================================== */
-  /* 3. PUBLIC CLIENT BOOKING FLOW (COM CONFIRMAÇÃO POR SMS E EMAIL)          */
+  /* 3. PUBLIC CLIENT BOOKING FLOW (FULL-BLEED EXPANSIVE LAYOUT)              */
   /* ======================================================================== */
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
-      <main className="flex-1 max-w-4xl w-full mx-auto px-2.5 sm:px-6 py-2 sm:py-6">
+    <div className="min-h-dvh w-full bg-white text-slate-900 flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
+      <main className="flex-1 w-full flex flex-col">
         <BookingWizard
           onBackToLanding={handleReturnToLanding}
           onSuccessReturnHome={handleReturnToLanding}

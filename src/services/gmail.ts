@@ -118,6 +118,7 @@ export async function sendGmailMessage(options: SendGmailOptions): Promise<{ id:
  * Generates styled HTML email for Qué Pasa reservation notice
  */
 export function generateReservationHtmlEmail(reservation: Reservation): string {
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro';
   return `
 <!DOCTYPE html>
 <html>
@@ -141,15 +142,8 @@ export function generateReservationHtmlEmail(reservation: Reservation): string {
         <span style="display:inline-block;background:#10b981;color:#ffffff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">
           Reserva Confirmada Oficialmente
         </span>
-        <h2 style="margin:16px 0 6px 0;font-size:22px;color:#ffffff;">Olá, ${reservation.customerName}!</h2>
-        <p style="margin:0;color:#94a3b8;font-size:14px;">A sua mesa junto aos canais de Aveiro está reservada e pronta para o acolher.</p>
-      </div>
-
-      <!-- Reservation Code Card -->
-      <div style="background:#071526;border:2px dashed #f59e0b;border-radius:18px;padding:20px;text-align:center;margin-bottom:28px;">
-        <span style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;display:block;">Código da Reserva</span>
-        <span style="font-size:32px;font-family:monospace;font-weight:800;color:#f59e0b;letter-spacing:3px;display:block;margin-top:4px;">${reservation.code}</span>
-        <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Apresente este código à chegada</span>
+        <h2 style="margin:16px 0 6px 0;font-size:22px;color:#ffffff;">Caro(a) ${reservation.customerName},</h2>
+        <p style="margin:0;color:#94a3b8;font-size:14px;">A sua mesa para ${reservation.guests} pessoas está confirmada para ${reservation.date} às ${reservation.time}.</p>
       </div>
 
       <!-- Details Grid -->
@@ -180,21 +174,26 @@ export function generateReservationHtmlEmail(reservation: Reservation): string {
         </table>
       </div>
 
-      <!-- Location Info -->
+      <!-- Clickable Google Maps Location Info -->
       <div style="background:#152e4d;border-radius:16px;padding:18px;margin-bottom:24px;text-align:center;font-size:13px;color:#cbd5e1;">
-        <p style="margin:0 0 6px 0;font-weight:700;color:#ffffff;">📍 Morada & Tolerância de Chegada</p>
-        <p style="margin:0;color:#94a3b8;font-size:12px;">Guardamos a sua mesa durante <strong>20 minutos</strong> a partir da hora marcada. Caso se atrase, contacte <strong>234 424 208</strong>.</p>
+        <p style="margin:0 0 8px 0;font-weight:700;color:#ffffff;">📍 Localização (Toque para abrir no Google Maps)</p>
+        <p style="margin:0 0 10px 0;">
+          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color:#f59e0b;font-weight:700;font-size:14px;text-decoration:underline;">
+            R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro
+          </a>
+        </p>
+        <p style="margin:0;color:#94a3b8;font-size:12px;">Tolerância de chegada: <strong>20 minutos</strong>.</p>
       </div>
 
       <!-- Contact assistance -->
       <div style="text-align:center;font-size:12px;color:#64748b;padding-top:12px;border-top:1px solid #1e3a5f;">
-        <p style="margin:0;">Para qualquer questão ou alteração, contacte-nos pelo telefone <strong>234 424 208</strong>.</p>
+        <p style="margin:0;">Até breve,<br/><strong>Equipa Qué Pasa</strong></p>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="background:#071526;padding:18px;text-align:center;font-size:11px;color:#64748b;border-top:1px solid #1e3a5f;">
-      Aviso enviado oficialmente através da API do Gmail · Qué Pasa Aveiro
+      Qué Pasa · <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color:#94a3b8;text-decoration:underline;">R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro</a>
     </div>
 
   </div>

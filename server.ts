@@ -61,211 +61,8 @@ function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-// Initial Database Seeding
+// Initial Database Seeding (Clean for Production Launch)
 function getInitialDb(): DatabaseSchema {
-  const today = getTodayStr();
-  const tomorrow = getTomorrowStr();
-
-  const initialReservations: Reservation[] = [
-    {
-      id: 'res-1',
-      code: 'OQP-7101',
-      date: today,
-      time: '12:30',
-      guests: 2,
-      tableId: 1,
-      customerName: 'Gonçalo Ribeiro',
-      customerPhone: '+351 912 345 678',
-      customerEmail: 'goncalo.ribeiro@exemplo.pt',
-      specialRequests: ['Mesa junto à janela'],
-      status: 'concluida',
-      durationMinutes: 90,
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-2',
-      code: 'OQP-7102',
-      date: today,
-      time: '13:00',
-      guests: 4,
-      tableId: 10,
-      customerName: 'Mariana Cerqueira',
-      customerPhone: '+351 934 892 110',
-      customerEmail: 'marianacerqueira@exemplo.pt',
-      specialRequests: ['Cadeira de bebé'],
-      status: 'sentada',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-      source: 'online',
-      internalNotes: 'Cliente habitual, aprecia vinhos da Bairrada.',
-    },
-    {
-      id: 'res-3',
-      code: 'OQP-7103',
-      date: today,
-      time: '13:30',
-      guests: 3,
-      tableId: 2,
-      customerName: 'Tiago Fontes',
-      customerPhone: '+351 961 773 402',
-      customerEmail: 'tiagofontes@exemplo.pt',
-      specialRequests: ['Alergia a marisco'],
-      status: 'chegou',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      source: 'telefone',
-    },
-    {
-      id: 'res-4',
-      code: 'OQP-7104',
-      date: today,
-      time: '20:00',
-      guests: 2,
-      tableId: 12,
-      customerName: 'Sofia Albuquerque',
-      customerPhone: '+351 925 410 889',
-      customerEmail: 'sofia.albuquerque@exemplo.pt',
-      specialRequests: ['Aniversário'],
-      status: 'confirmada',
-      durationMinutes: 90,
-      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-5',
-      code: 'OQP-7105',
-      date: today,
-      time: '20:30',
-      guests: 2,
-      tableId: 7,
-      customerName: 'Duarte Mendonça',
-      customerPhone: '+351 919 663 201',
-      customerEmail: 'duarte.mendonca@exemplo.pt',
-      specialRequests: ['Mobilidade reduzida'],
-      status: 'confirmada',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-6',
-      code: 'OQP-7106',
-      date: today,
-      time: '21:00',
-      guests: 5,
-      tableId: 1,
-      customerName: 'Beatriz Vasconcelos',
-      customerPhone: '+351 938 120 445',
-      customerEmail: 'beatriz.v@exemplo.pt',
-      specialRequests: ['Jantar de celebração'],
-      status: 'confirmada',
-      durationMinutes: 120,
-      createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-7',
-      code: 'OQP-7107',
-      date: tomorrow,
-      time: '13:00',
-      guests: 3,
-      tableId: 3,
-      customerName: 'Helena Pires',
-      customerPhone: '+351 966 332 109',
-      customerEmail: 'helena.pires@exemplo.pt',
-      specialRequests: [],
-      status: 'confirmada',
-      durationMinutes: 105,
-      createdAt: new Date().toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-8',
-      code: 'OQP-7108',
-      date: tomorrow,
-      time: '20:00',
-      guests: 2,
-      tableId: 1,
-      customerName: 'Pedro Antunes',
-      customerPhone: '+351 917 882 133',
-      customerEmail: 'pedroantunes@exemplo.pt',
-      specialRequests: ['Aniversário de casamento'],
-      status: 'confirmada',
-      durationMinutes: 90,
-      createdAt: new Date().toISOString(),
-      source: 'online',
-    },
-  ];
-
-  const initialCustomers: CustomerProfile[] = [
-    {
-      id: 'cust-1',
-      name: 'Mariana Cerqueira',
-      phone: '+351 934 892 110',
-      email: 'marianacerqueira@exemplo.pt',
-      isVip: true,
-      visitsCount: 8,
-      noShowCount: 0,
-      allergies: ['Frutos secos'],
-      internalNotes: 'Cliente assídua, prefere mesas junto à janela.',
-      lastVisit: today,
-      gdprConsentDate: '2026-02-10T14:30:00Z',
-    },
-    {
-      id: 'cust-2',
-      name: 'Gonçalo Ribeiro',
-      phone: '+351 912 345 678',
-      email: 'goncalo.ribeiro@exemplo.pt',
-      isVip: false,
-      visitsCount: 4,
-      noShowCount: 0,
-      allergies: [],
-      internalNotes: 'Almoça habitualmente à sexta-feira.',
-      lastVisit: today,
-      gdprConsentDate: '2026-03-01T10:20:00Z',
-    },
-    {
-      id: 'cust-3',
-      name: 'Beatriz Vasconcelos',
-      phone: '+351 938 120 445',
-      email: 'beatriz.v@exemplo.pt',
-      isVip: true,
-      visitsCount: 12,
-      noShowCount: 0,
-      allergies: [],
-      internalNotes: 'Organiza jantares de empresa. Atendimento prioritário.',
-      lastVisit: today,
-      gdprConsentDate: '2026-01-15T09:15:00Z',
-    },
-  ];
-
-  const initialNotifications: OwnerNotification[] = [
-    {
-      id: 'notif-1',
-      title: 'Nova Reserva Online',
-      message: 'Duarte Mendonça reservou para 4 pessoas hoje às 20:30 (Mesa 7).',
-      reservationId: 'res-5',
-      reservationCode: 'OQP-7105',
-      isRead: false,
-      emailSentToOwner: true,
-      createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    },
-  ];
-
-  const initialBlocked: BlockedPeriod[] = [
-    {
-      id: 'block-1',
-      type: 'horario',
-      date: tomorrow,
-      startTime: '15:30',
-      endTime: '19:30',
-      tableId: null,
-      reason: 'Pausa da equipa de sala e preparação de turno',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
   const extendedSettings: RestaurantSettings = {
     ...INITIAL_SETTINGS,
     ownerEmail: 'dono@quepasa.pt',
@@ -278,12 +75,12 @@ function getInitialDb(): DatabaseSchema {
 
   return {
     tables: INITIAL_TABLES,
-    reservations: initialReservations,
-    customers: initialCustomers,
+    reservations: [],
+    customers: [],
     waitlist: [],
     settings: extendedSettings,
-    blockedPeriods: initialBlocked,
-    notifications: initialNotifications,
+    blockedPeriods: [],
+    notifications: [],
     holds: [],
     ownerAuth: {
       username: 'dono@barbaazul.pt',
@@ -460,52 +257,154 @@ async function fetchSettingsFromSupabaseServer(): Promise<RestaurantSettings | n
   }
 }
 
+const FICTITIOUS_RESERVATION_IDS = new Set([
+  'res-1',
+  'res-2',
+  'res-3',
+  'res-4',
+  'res-5',
+  'res-6',
+  'res-7',
+  'res-8',
+  'res-9',
+  'res-10',
+  'res-1793230719043-kyfj',
+  'res-1793224184085-7mci',
+  'res-1793122407805-z64k',
+  'res-1793122394137-g3os',
+  'res-1793031656541-j27b',
+  'res-1793030256572-u69b',
+]);
+
+const FICTITIOUS_CODES = new Set([
+  'OQP-7101',
+  'OQP-7102',
+  'OQP-7103',
+  'OQP-7104',
+  'OQP-7105',
+  'OQP-7106',
+  'OQP-7107',
+  'OQP-7108',
+  'OQP-7109',
+  'OQP-7110',
+  'OQP-6352',
+  'OQP-2718',
+  'OQP-1239',
+  'OQP-7367',
+  'OQP-7253',
+  'OQP-1002',
+]);
+
+let supabaseCleanedOnce = false;
+async function cleanFictitiousFromSupabaseOnce() {
+  if (supabaseCleanedOnce) return;
+  supabaseCleanedOnce = true;
+  try {
+    await supabaseServer
+      .from('reservations')
+      .delete()
+      .in('id', Array.from(FICTITIOUS_RESERVATION_IDS));
+    await supabaseServer
+      .from('reservations')
+      .delete()
+      .in('code', Array.from(FICTITIOUS_CODES));
+    await supabaseServer
+      .from('customers')
+      .delete()
+      .in('id', ['cust-1', 'cust-2', 'cust-3', 'cust-4', 'cust-5', 'cust-6']);
+  } catch {
+    // ignore cleanup notice
+  }
+}
+cleanFictitiousFromSupabaseOnce();
+
 async function hydrateStateFromSupabaseServer(state: DatabaseSchema): Promise<DatabaseSchema> {
   try {
+    await cleanFictitiousFromSupabaseOnce();
     const [resQuery, setQuery] = await Promise.all([
       supabaseServer.from('reservations').select('*').order('created_at', { ascending: false }),
       supabaseServer.from('settings').select('data').eq('id', 'current').maybeSingle(),
     ]);
 
-    if (!resQuery.error && Array.isArray(resQuery.data) && resQuery.data.length > 0) {
-      const supaReservations: Reservation[] = resQuery.data.map((row: any) => ({
-        id: row.id,
-        code: row.code,
-        date: row.date,
-        time: row.time,
-        guests: row.guests,
-        tableId: row.table_id,
-        customerName: row.customer_name,
-        customerPhone: row.customer_phone,
-        customerEmail: row.customer_email || '',
-        specialRequests: Array.isArray(row.special_requests) ? row.special_requests : [],
-        notes: row.notes || '',
-        internalNotes: row.internal_notes || '',
-        status: row.status,
-        durationMinutes: row.duration_minutes || 90,
-        source: row.source || 'online',
-        createdAt: row.created_at || new Date().toISOString(),
-      }));
+    if (!resQuery.error && Array.isArray(resQuery.data)) {
+      const supaReservations: Reservation[] = resQuery.data
+        .filter((row: any) => !FICTITIOUS_RESERVATION_IDS.has(row.id) && !FICTITIOUS_CODES.has(row.code))
+        .map((row: any) => ({
+          id: row.id,
+          code: row.code,
+          date: row.date,
+          time: row.time,
+          guests: row.guests,
+          tableId: row.table_id,
+          customerName: row.customer_name,
+          customerPhone: row.customer_phone,
+          customerEmail: row.customer_email || '',
+          specialRequests: Array.isArray(row.special_requests) ? row.special_requests : [],
+          notes: row.notes || '',
+          internalNotes: row.internal_notes || '',
+          status: row.status,
+          durationMinutes: row.duration_minutes || 90,
+          source: row.source || 'online',
+          createdAt: row.created_at || new Date().toISOString(),
+        }));
 
       const byId = new Map<string, Reservation>();
       for (const r of supaReservations) {
         if (r?.id) byId.set(r.id, r);
       }
       for (const r of state.reservations) {
-        if (r?.id && !byId.has(r.id)) byId.set(r.id, r);
+        if (r?.id && !FICTITIOUS_RESERVATION_IDS.has(r.id) && !FICTITIOUS_CODES.has(r.code) && !byId.has(r.id)) {
+          byId.set(r.id, r);
+        }
       }
       state.reservations = Array.from(byId.values());
     }
 
     if (!setQuery.error && setQuery.data?.data) {
+      const remoteSettings = setQuery.data.data as Partial<RestaurantSettings>;
+      const remoteTemplates: Partial<NonNullable<RestaurantSettings['emailTemplates']>> = remoteSettings.emailTemplates || {};
+
+      let confirmationBody = remoteTemplates.confirmationBody || state.settings.emailTemplates?.confirmationBody || '';
+      let needsSync = false;
+      if (confirmationBody.includes('Cais dos Mercantéis') || confirmationBody.includes('Código de reserva: {CODIGO}')) {
+        confirmationBody = INITIAL_SETTINGS.emailTemplates?.confirmationBody || confirmationBody;
+        needsSync = true;
+      }
+
+      let cancellationBody = remoteTemplates.cancellationBody || state.settings.emailTemplates?.cancellationBody || '';
+      if (cancellationBody.includes('A sua reserva {CODIGO} para')) {
+        cancellationBody = INITIAL_SETTINGS.emailTemplates?.cancellationBody || cancellationBody;
+        needsSync = true;
+      }
+
+      const address =
+        !remoteSettings.address || remoteSettings.address.includes('Cais dos Mercantéis')
+          ? INITIAL_SETTINGS.address
+          : remoteSettings.address;
+
+      const postalCode =
+        !remoteSettings.postalCode || remoteSettings.postalCode === '3800-228'
+          ? INITIAL_SETTINGS.postalCode
+          : remoteSettings.postalCode;
+
       state.settings = {
         ...state.settings,
-        ...setQuery.data.data,
+        ...remoteSettings,
+        address,
+        postalCode,
         emailTemplates: {
           ...(state.settings.emailTemplates || {}),
-          ...(setQuery.data.data.emailTemplates || {}),
+          ...remoteTemplates,
+          confirmationBody,
+          cancellationBody,
         },
       };
+
+      if (needsSync) {
+        syncSettingsToSupabaseServer(state.settings);
+      }
+    } else {
+      syncSettingsToSupabaseServer(state.settings);
     }
   } catch (err: any) {
     console.warn('[SUPABASE HYDRATE WARN]', err?.message);
@@ -736,15 +635,18 @@ async function sendGmailWithToken(
   return res.json();
 }
 
+const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro';
+const OFFICIAL_ADDRESS = 'R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro';
+
 // Communications & Notifications helpers (SMS & Email)
 function generateReservationSms(res: Reservation, settings: RestaurantSettings): string {
   const restName = settings.restaurantName || 'Qué Pasa';
-  return `${restName}: A sua mesa está 100% confirmada para ${res.date} às ${res.time} (${res.guests} pessoas, Mesa ${res.tableId}). Não é necessário código nem validação adicional. Esperamos por si no Cais dos Mercantéis 14, Aveiro. Tel: ${settings.phone}.`;
+  return `${restName}: A sua mesa está 100% confirmada para ${res.date} às ${res.time} (${res.guests} pessoas, Mesa ${res.tableId}). Esperamos por si em ${OFFICIAL_ADDRESS}. Tel: ${settings.phone}.`;
 }
 
 function generateReminderSms(res: Reservation, settings: RestaurantSettings): string {
   const restName = settings.restaurantName || 'Qué Pasa';
-  return `Lembrete ${restName}: A sua mesa para ${res.guests} pessoas está marcada para hoje às ${res.time} (Mesa ${res.tableId}). Não é necessário código nem validação. Cais dos Mercantéis 14, Aveiro. Tel: ${settings.phone}.`;
+  return `Lembrete ${restName}: A sua mesa para ${res.guests} pessoas está marcada para hoje às ${res.time} (Mesa ${res.tableId}). ${OFFICIAL_ADDRESS}. Tel: ${settings.phone}.`;
 }
 
 function generateCompletionSms(res: Reservation, settings: RestaurantSettings): string {
@@ -752,7 +654,19 @@ function generateCompletionSms(res: Reservation, settings: RestaurantSettings): 
   return `${restName}: Muito obrigado pela sua visita hoje! Esperamos que a sua refeição tenha sido memorável. Até breve em Aveiro!`;
 }
 
-function generateConfirmationEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string } {
+function formatEmailBodyWithMapsLinkHtml(textBody: string): string {
+  return textBody
+    .replace(
+      /R\.\s*Cmte\.\s*Rocha\s*e\s*Cunha\s*3C,\s*3800-140\s*Aveiro(?:\s*\(https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=[^)]+\))?/gi,
+      `<a href="${MAPS_URL}" target="_blank" rel="noopener noreferrer" style="color:#f59e0b;font-weight:bold;text-decoration:underline;">${OFFICIAL_ADDRESS}</a>`
+    )
+    .replace(
+      /Cais\s*dos\s*Mercantéis,?\s*nº?\s*14,\s*Aveiro/gi,
+      `<a href="${MAPS_URL}" target="_blank" rel="noopener noreferrer" style="color:#f59e0b;font-weight:bold;text-decoration:underline;">${OFFICIAL_ADDRESS}</a>`
+    );
+}
+
+function generateConfirmationEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string; htmlBody: string } {
   const restName = settings.restaurantName || 'Qué Pasa';
   const template = settings.emailTemplates || {};
   let subject = template.confirmationSubject || `Confirmação da sua Reserva - ${restName}`;
@@ -764,8 +678,15 @@ function generateConfirmationEmail(res: Reservation, settings: RestaurantSetting
     .replace(/{MESA}/g, String(res.tableId))
     .replace(/{PESSOAS}/g, String(res.guests));
 
-  let body = template.confirmationBody || `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos (Contacto para atrasos: 234 424 208).\n\nAté breve,\nEquipa ${restName}`;
-  body = body
+  const defaultBody = `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está confirmada para {DATA} às {HORA}.\n\nLocalização: ${OFFICIAL_ADDRESS} (${MAPS_URL})\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa ${restName}`;
+
+  let rawTemplate = template.confirmationBody || defaultBody;
+  // Upgrade legacy template if it still references old Cais dos Mercantéis address or reservation code line
+  if (rawTemplate.includes('Cais dos Mercantéis') || rawTemplate.includes('Código de reserva: {CODIGO}')) {
+    rawTemplate = defaultBody;
+  }
+
+  const body = rawTemplate
     .replace(/{NOME}/g, res.customerName)
     .replace(/{PESSOAS}/g, String(res.guests))
     .replace(/{DATA}/g, res.date)
@@ -773,13 +694,15 @@ function generateConfirmationEmail(res: Reservation, settings: RestaurantSetting
     .replace(/{CODIGO}/g, res.code)
     .replace(/{MESA}/g, String(res.tableId));
 
-  return { subject, body };
+  const htmlBody = formatEmailBodyWithMapsLinkHtml(body).replace(/\n/g, '<br/>');
+
+  return { subject, body, htmlBody };
 }
 
-function generateCancellationEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string } {
+function generateCancellationEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string; htmlBody: string } {
   const restName = settings.restaurantName || 'Qué Pasa';
   const template = settings.emailTemplates || {};
-  let subject = template.cancellationSubject || `Reserva Cancelada · ${restName}`;
+  let subject = template.cancellationSubject || `Cancelamento de Reserva - ${restName}`;
   subject = subject
     .replace(/{CODIGO}/g, res.code)
     .replace(/{NOME}/g, res.customerName)
@@ -788,10 +711,14 @@ function generateCancellationEmail(res: Reservation, settings: RestaurantSetting
     .replace(/{MESA}/g, String(res.tableId))
     .replace(/{PESSOAS}/g, String(res.guests));
 
-  let body =
-    template.cancellationBody ||
-    `Olá {NOME},\n\nA sua reserva no ${restName} para {PESSOAS} pessoas no dia {DATA} às {HORA} (Mesa {MESA}, Código {CODIGO}) foi cancelada.\n\nEsperamos ter a oportunidade de o receber numa próxima ocasião.\n\nCom os melhores cumprimentos,\nA equipa do ${restName}`;
-  body = body
+  const defaultBody = `Olá {NOME},\n\nA sua reserva para {DATA} às {HORA} foi cancelada com sucesso.\nEsperamos ter o prazer de o receber numa próxima oportunidade em Aveiro.`;
+
+  let rawTemplate = template.cancellationBody || defaultBody;
+  if (rawTemplate.includes('A sua reserva {CODIGO} para')) {
+    rawTemplate = defaultBody;
+  }
+
+  const body = rawTemplate
     .replace(/{NOME}/g, res.customerName)
     .replace(/{PESSOAS}/g, String(res.guests))
     .replace(/{DATA}/g, res.date)
@@ -799,13 +726,15 @@ function generateCancellationEmail(res: Reservation, settings: RestaurantSetting
     .replace(/{CODIGO}/g, res.code)
     .replace(/{MESA}/g, String(res.tableId));
 
-  return { subject, body };
+  const htmlBody = body.replace(/\n/g, '<br/>');
+
+  return { subject, body, htmlBody };
 }
 
 function generateCompletionEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string } {
   const restName = settings.restaurantName || 'Qué Pasa';
   const subject = `Obrigado pela sua visita ao ${restName} · Esperamos revê-lo em breve!`;
-  const body = `Olá ${res.customerName},\n\nEsperamos que a sua experiência no ${restName} tenha sido extraordinária!\n\nAgradecemos calorosamente a sua visita e esperamos voltar a acolhê-lo em breve junto aos canais de Aveiro.\n\nCom os melhores cumprimentos,\nA gerência do ${restName}`;
+  const body = `Olá ${res.customerName},\n\nEsperamos que a sua experiência no ${restName} tenha sido extraordinária!\n\nAgradecemos calorosamente a sua visita e esperamos voltar a acolhê-lo em breve em Aveiro.\n\nCom os melhores cumprimentos,\nA gerência do ${restName}`;
   return { subject, body };
 }
 
@@ -874,6 +803,7 @@ async function dispatchEmail(
   let messageId = `email-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
 
   const brevo = getBrevoConfig();
+  const formattedHtmlContent = formatEmailBodyWithMapsLinkHtml(message);
 
   // 1. Try Brevo Transactional Email if API Key available
   if (brevo.apiKey && recipientEmail) {
@@ -886,10 +816,10 @@ async function dispatchEmail(
             <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px; text-transform: uppercase;">Nikkei · Barba Azul · Aveiro</p>
           </div>
           <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 24px; margin: 24px 0;">
-            <p style="font-size: 15px; line-height: 1.7; white-space: pre-line; margin: 0; color: #f8fafc;">${message}</p>
+            <p style="font-size: 15px; line-height: 1.7; white-space: pre-line; margin: 0; color: #f8fafc;">${formattedHtmlContent}</p>
           </div>
           <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; font-size: 12px; color: #94a3b8;">
-            <p style="margin: 0;">Cais dos Mercantéis, nº 14 · Aveiro</p>
+            <p style="margin: 0;"><a href="${MAPS_URL}" target="_blank" rel="noopener noreferrer" style="color: #f59e0b; text-decoration: underline;">${OFFICIAL_ADDRESS}</a></p>
             <p style="margin: 4px 0 0 0;">Telefone: 234 424 208</p>
           </div>
         </div>
@@ -925,10 +855,10 @@ async function dispatchEmail(
               <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px; text-transform: uppercase;">Nikkei · Barba Azul · Aveiro</p>
             </div>
             <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 24px; margin: 24px 0;">
-              <p style="font-size: 15px; line-height: 1.7; white-space: pre-line; margin: 0; color: #f8fafc;">${message}</p>
+              <p style="font-size: 15px; line-height: 1.7; white-space: pre-line; margin: 0; color: #f8fafc;">${formattedHtmlContent}</p>
             </div>
             <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; font-size: 12px; color: #94a3b8;">
-              <p style="margin: 0;">Cais dos Mercantéis, nº 14 · Aveiro</p>
+              <p style="margin: 0;"><a href="${MAPS_URL}" target="_blank" rel="noopener noreferrer" style="color: #f59e0b; text-decoration: underline;">${OFFICIAL_ADDRESS}</a></p>
               <p style="margin: 4px 0 0 0;">Telefone: 234 424 208</p>
             </div>
           </div>
@@ -1012,30 +942,42 @@ async function sendReservationWebhook(
     const restName = settings.restaurantName || 'Qué Pasa';
     const templates = settings.emailTemplates || {};
 
-    // 2. Modelos brutos com marcadores {NOME}, {PESSOAS}, {DATA}, etc. preservados
+    // 2. Modelos brutos com marcadores {NOME}, {PESSOAS}, {DATA}, {HORA} preservados
     const defaultConfirmationSubject = `Confirmação da sua Reserva - ${restName}`;
-    const defaultConfirmationBody = `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos (Contacto para atrasos: 234 424 208).\n\nAté breve,\nEquipa ${restName}`;
+    const defaultConfirmationBody = `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está confirmada para {DATA} às {HORA}.\n\nLocalização: ${OFFICIAL_ADDRESS} (${MAPS_URL})\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa ${restName}`;
 
-    const defaultCancellationSubject = `Reserva Cancelada · ${restName}`;
-    const defaultCancellationBody = `Olá {NOME},\n\nA sua reserva no ${restName} para {PESSOAS} pessoas no dia {DATA} às {HORA} (Mesa {MESA}, Código {CODIGO}) foi cancelada.\n\nEsperamos ter a oportunidade de o receber numa próxima ocasião.\n\nCom os melhores cumprimentos,\nA equipa do ${restName}`;
+    const defaultCancellationSubject = `Cancelamento de Reserva - ${restName}`;
+    const defaultCancellationBody = `Olá {NOME},\n\nA sua reserva para {DATA} às {HORA} foi cancelada com sucesso.\nEsperamos ter o prazer de o receber numa próxima oportunidade em Aveiro.`;
 
-    const confirmationSubjectTemplate = (templates.confirmationSubject || defaultConfirmationSubject).trim();
-    const confirmationBodyTemplate = (templates.confirmationBody || defaultConfirmationBody).trim();
-    const cancellationSubjectTemplate = (templates.cancellationSubject || defaultCancellationSubject).trim();
-    const cancellationBodyTemplate = (templates.cancellationBody || defaultCancellationBody).trim();
+    let confirmationBodyRaw = (templates.confirmationBody || defaultConfirmationBody).trim();
+    if (confirmationBodyRaw.includes('Cais dos Mercantéis') || confirmationBodyRaw.includes('Código de reserva: {CODIGO}')) {
+      confirmationBodyRaw = defaultConfirmationBody;
+    }
+
+    let cancellationBodyRaw = (templates.cancellationBody || defaultCancellationBody).trim();
+    if (cancellationBodyRaw.includes('A sua reserva {CODIGO} para')) {
+      cancellationBodyRaw = defaultCancellationBody;
+    }
 
     const emailTemplates = {
-      confirmationSubject: confirmationSubjectTemplate,
-      confirmationBody: confirmationBodyTemplate,
-      cancellationSubject: cancellationSubjectTemplate,
-      cancellationBody: cancellationBodyTemplate,
+      confirmationSubject: (templates.confirmationSubject || defaultConfirmationSubject).trim(),
+      confirmationBody: confirmationBodyRaw,
+      cancellationSubject: (templates.cancellationSubject || defaultCancellationSubject).trim(),
+      cancellationBody: cancellationBodyRaw,
     };
 
-    // 3. Selecionar o assunto e corpo correspondentes ao evento atual e substituir os marcadores para o cliente
+    const mergedSettings: RestaurantSettings = {
+      ...settings,
+      emailTemplates: {
+        ...(INITIAL_SETTINGS.emailTemplates as NonNullable<RestaurantSettings['emailTemplates']>),
+        ...(settings.emailTemplates || {}),
+        ...emailTemplates,
+      },
+    };
     const isCancellation = eventType === 'cancelamento_reserva';
     const activeEmailData = isCancellation
-      ? generateCancellationEmail(reservation, settings)
-      : generateConfirmationEmail(reservation, settings);
+      ? generateCancellationEmail(reservation, mergedSettings)
+      : generateConfirmationEmail(reservation, mergedSettings);
 
     const payload = {
       event: eventType,
@@ -1045,8 +987,13 @@ async function sendReservationWebhook(
       // Assunto e corpo já selecionados e preenchidos especificamente para este evento
       assunto_email: activeEmailData.subject,
       corpo_email: activeEmailData.body,
+      corpo_email_html: activeEmailData.htmlBody,
       email_subject: activeEmailData.subject,
       email_body: activeEmailData.body,
+      email_body_html: activeEmailData.htmlBody,
+      localizacao: OFFICIAL_ADDRESS,
+      mapa_url: MAPS_URL,
+      google_maps_url: MAPS_URL,
 
       // Modelos configurados pelo administrador no painel (com marcadores intactos)
       emailTemplates,

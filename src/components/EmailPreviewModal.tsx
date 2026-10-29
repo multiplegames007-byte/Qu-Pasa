@@ -79,13 +79,6 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
 
           {/* Reservation Card inside Email */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Código de Reserva</span>
-              <span className="font-mono text-base font-bold text-sky-900 bg-sky-100 px-3 py-1 rounded-md">
-                {reservation.code}
-              </span>
-            </div>
-
             <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
@@ -112,10 +105,17 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
-                  <div className="text-slate-500">Local</div>
-                  <div className="font-semibold text-slate-800">Cais dos Mercantéis, 14</div>
+                  <div className="text-slate-500">Localização</div>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-amber-700 underline hover:text-amber-900"
+                  >
+                    R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro
+                  </a>
                 </div>
               </div>
             </div>
@@ -131,10 +131,7 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
           {/* Useful notes */}
           <div className="text-xs text-slate-500 space-y-2 border-t border-slate-100 pt-4">
             <p>
-              • <strong>Tolerância de chegada:</strong> {settings.noShowGraceMinutes || 20} minutos a partir da hora marcada. Caso se atrase, agradecemos que nos contacte por telefone para <strong>{settings.phone || '234 424 208'}</strong>.
-            </p>
-            <p>
-              • <strong>Alterações ou cancelamento:</strong> Pode gerir a sua reserva em qualquer altura no nosso site através do código <strong>{reservation.code}</strong> e do seu telemóvel.
+              • <strong>Tolerância de chegada:</strong> {settings.noShowGraceMinutes || 20} minutos.
             </p>
           </div>
         </div>

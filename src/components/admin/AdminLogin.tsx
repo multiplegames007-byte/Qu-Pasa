@@ -43,9 +43,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-center items-center px-4 py-8 overflow-hidden bg-black text-white font-sans select-none">
+    <div className="relative min-h-dvh w-full flex-1 flex flex-col justify-center items-center px-4 py-8 bg-black text-white font-sans select-none">
       {/* 1. Full-screen Background Photo */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none">
         <img
           src="/quepasa-poster.jpg"
           alt="Qué Pasa · Nikkei · Barba Azul"

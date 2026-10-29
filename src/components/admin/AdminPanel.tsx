@@ -619,7 +619,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex antialiased selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-dvh w-full bg-slate-50 text-slate-900 font-sans flex antialiased selection:bg-amber-100 selection:text-amber-900">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 right-4 z-50 bg-amber-500 text-neutral-950 px-4 py-2.5 rounded-xl font-sans font-bold text-sm shadow-2xl flex items-center gap-2 animate-fade-in border border-amber-400">
@@ -641,7 +641,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
       {/* Menu Lateral de Páginas (Abre exclusivamente ao clicar nos 3 traços no canto superior direito) */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-screen w-72 sm:w-80 bg-white border-l border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
+        className={`fixed top-0 right-0 z-50 h-dvh w-72 sm:w-80 bg-white border-l border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
           isSidebarOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
@@ -836,9 +836,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       {/* ========================================================================= */}
       {/* 2. MAIN CONTAINER (BARRA SUPERIOR + CONTEÚDO PRINCIPAL)                    */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         {/* BARRA SUPERIOR (TOP BAR) - TÍTULO DA SECÇÃO + NOTIFICAÇÕES + 3 BARRAS */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-xs">
+        <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 lg:px-10 py-3.5 flex items-center justify-between gap-3 shadow-xs">
           {/* Left: Título da secção ativa */}
           <h2 className="font-serif-display text-2xl sm:text-[28px] text-slate-900 font-normal leading-tight tracking-tight">
             {sectionTitleMap[activeSection] || 'Dashboard'}
@@ -939,7 +939,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
         {/* ========================================================================= */}
         {/* 3. CONTEÚDO PRINCIPAL (RENDERIZADO PELA SECÇÃO SELECIONADA)                */}
         {/* ========================================================================= */}
-        <main className="flex-1 p-3.5 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 w-full px-4 sm:px-8 lg:px-10 py-5 sm:py-6 space-y-6">
           {/* ======================================================================= */}
           {/* SECÇÃO: DASHBOARD PRINCIPAL                                             */}
           {/* ======================================================================= */}
@@ -2010,7 +2010,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <input
                       type="text"
                       value={settings.address ?? ''}
-                      placeholder="Cais dos Mercantéis 14"
+                      placeholder="R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro"
                       onChange={(e) => setSettings({ ...settings, address: e.target.value })}
                       className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
@@ -2023,7 +2023,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <input
                       type="text"
                       value={settings.postalCode ?? ''}
-                      placeholder="3800-228"
+                      placeholder="3800-140"
                       onChange={(e) => setSettings({ ...settings, postalCode: e.target.value })}
                       className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />

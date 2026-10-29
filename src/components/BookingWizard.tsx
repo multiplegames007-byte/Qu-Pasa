@@ -65,7 +65,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
   const [config, setConfig] = useState<Partial<RestaurantSettings>>({
     restaurantName: 'Qué Pasa',
     phone: '234 424 208',
-    address: 'Cais dos Mercantéis, nº 14',
+    address: 'R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro',
     city: 'Aveiro',
     noShowGraceMinutes: 20,
     maxAdvanceDays: 60,
@@ -199,8 +199,8 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
       const html = generateReservationHtmlEmail(completedReservation);
       await sendGmailMessage({
         to: completedReservation.customerEmail,
-        subject: `Confirmação de Reserva Oficial · Qué Pasa (${completedReservation.code})`,
-        bodyText: `Olá ${completedReservation.customerName},\n\nA sua mesa para ${completedReservation.guests} pessoas no Qué Pasa está confirmada para ${completedReservation.date} às ${completedReservation.time} (Mesa ${completedReservation.tableId}).\nCódigo: ${completedReservation.code}.\n\nCais dos Mercantéis 14, Aveiro.`,
+        subject: `Confirmação da sua Reserva - Qué Pasa`,
+        bodyText: `Caro(a) ${completedReservation.customerName},\n\nA sua mesa para ${completedReservation.guests} pessoas está confirmada para ${completedReservation.date} às ${completedReservation.time}.\n\nLocalização: R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro (https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro)\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa`,
         bodyHtml: html,
       });
       setGmailSentSuccess(true);
@@ -378,8 +378,8 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
           const html = generateReservationHtmlEmail(res);
           await sendGmailMessage({
             to: res.customerEmail,
-            subject: `Confirmação de Reserva Oficial · Qué Pasa (${res.code})`,
-            bodyText: `Olá ${res.customerName},\n\nA sua mesa para ${res.guests} pessoas no Qué Pasa está 100% confirmada para ${res.date} às ${res.time} (Mesa ${res.tableId}).\nA sua reserva está garantida sem necessidade de qualquer código ou validação.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTelefone: 234 424 208`,
+            subject: `Confirmação da sua Reserva - Qué Pasa`,
+            bodyText: `Caro(a) ${res.customerName},\n\nA sua mesa para ${res.guests} pessoas está confirmada para ${res.date} às ${res.time}.\n\nLocalização: R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro (https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro)\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa`,
             bodyHtml: html,
             accessToken: token,
           });
@@ -405,41 +405,45 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Optional Top Return to Landing */}
-      {onBackToLanding && currentStep < 7 && (
-        <div className="mb-4 flex items-center justify-start">
-          <button
-            type="button"
-            onClick={onBackToLanding}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 shadow-xs transition-colors cursor-pointer"
-          >
-            <span>← Início</span>
-          </button>
-        </div>
-      )}
-
-      {/* Progress Stepper */}
+    <div className="w-full min-h-dvh flex-1 flex flex-col bg-white">
+      {/* Full-bleed Sticky Top Bar & Progress Stepper */}
       {currentStep < 7 && (
-        <div className="mb-6 px-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
-            <span>Passo {currentStep} de 6</span>
-            <span className="text-slate-900 font-bold">
-              {currentStep === 1 && '1. Selecione a Data'}
-              {currentStep === 2 && '2. Número de Pessoas'}
-              {currentStep === 3 && '3. Horário Disponível'}
-              {currentStep === 4 && '4. Escolha da Mesa'}
-              {currentStep === 5 && '5. Os Seus Dados'}
-              {currentStep === 6 && '6. Resumo e Confirmação'}
-            </span>
+        <header className="sticky top-0 z-20 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 lg:px-12 py-3.5 space-y-2.5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {onBackToLanding && (
+                <button
+                  type="button"
+                  onClick={onBackToLanding}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                >
+                  <span>← Início</span>
+                </button>
+              )}
+              <span className="font-titulo text-lg sm:text-xl text-slate-900">Qué Pasa</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span>Passo {currentStep} de 6</span>
+              <span className="hidden sm:inline text-slate-300">·</span>
+              <span className="hidden sm:inline text-slate-900 font-bold">
+                {currentStep === 1 && '1. Selecione a Data'}
+                {currentStep === 2 && '2. Número de Pessoas'}
+                {currentStep === 3 && '3. Horário Disponível'}
+                {currentStep === 4 && '4. Escolha da Mesa'}
+                {currentStep === 5 && '5. Os Seus Dados'}
+                {currentStep === 6 && '6. Resumo e Confirmação'}
+              </span>
+            </div>
           </div>
-          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+
+          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-amber-600 h-full transition-all duration-300 rounded-full"
               style={{ width: `${(currentStep / 6) * 100}%` }}
             />
           </div>
-        </div>
+        </header>
       )}
 
       {/* STEP 1: DATA (VISUAL CALENDAR) */}
@@ -475,7 +479,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
         };
 
         return (
-          <div className="bg-white rounded-3xl p-3.5 sm:p-8 shadow-sm border border-slate-200/80 space-y-3 sm:space-y-6">
+          <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-5 sm:space-y-6">
             <div>
               <h2 className="cliente-titulo-passo text-slate-900 text-xl sm:text-2xl">
                 Escolha a data da sua refeição
@@ -651,14 +655,14 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 2: NÚMERO DE PESSOAS */}
       {currentStep === 2 && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+        <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-6">
           <div>
             <h2 className="cliente-titulo-passo text-slate-900">
               Quantas pessoas serão?
             </h2>
           </div>
 
-          <div className="grid grid-cols-5 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-5 gap-2.5 sm:gap-4">
             {[1, 2, 3, 4, 5].map((num) => (
               <button
                 key={num}
@@ -699,7 +703,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 3: HORÁRIOS */}
       {currentStep === 3 && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+        <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-6">
           <div>
             <h2 className="cliente-titulo-passo text-slate-900">
               Selecione o horário
@@ -849,7 +853,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 4: PLANTA INTERATIVA (PRIVACY SAFE: ZERO CLIENT DATA) */}
       {currentStep === 4 && (
-        <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-6">
+        <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="cliente-titulo-passo text-slate-900">
               Escolha a sua mesa
@@ -934,7 +938,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 5: DADOS DO CLIENTE */}
       {currentStep === 5 && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+        <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-6">
           <div>
             <h2 className="cliente-titulo-passo text-slate-900">
               Dados para confirmação
@@ -1088,7 +1092,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 6: RESUMO E CONFIRMAÇÃO */}
       {currentStep === 6 && selectedTable && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+        <div className="w-full flex-1 px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-6">
           <div>
             <h2 className="cliente-titulo-passo text-slate-900">
               Confirmar os detalhes da reserva
@@ -1134,6 +1138,19 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
               </div>
             </div>
 
+            <div className="pt-3 border-t border-slate-200 text-xs">
+              <span className="text-slate-400 block font-medium">Localização (clique para abrir no Google Maps)</span>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-700 font-semibold underline hover:text-amber-900 inline-flex items-center gap-1 mt-0.5"
+              >
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span>R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro</span>
+              </a>
+            </div>
+
             {(specialRequests.length > 0 || customNotes.trim()) && (
               <div className="pt-3 border-t border-slate-200 text-xs">
                 <span className="text-slate-400 block font-medium">Observações</span>
@@ -1175,7 +1192,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
 
       {/* STEP 7: SUCESSO */}
       {currentStep === 7 && completedReservation && (
-        <div className="bg-white rounded-3xl p-5 sm:p-10 shadow-sm border border-slate-200 text-center space-y-4 sm:space-y-6">
+        <div className="w-full flex-1 flex flex-col justify-center px-4 sm:px-8 lg:px-12 py-10 text-center space-y-5 sm:space-y-6">
           <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-4 ring-emerald-50">
             <CheckCircle2 className="w-7 h-7" />
           </div>
@@ -1184,6 +1201,17 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
             <h2 className="cliente-sucesso text-slate-900 text-xl sm:text-2xl">
               Reserva Confirmada com Sucesso!
             </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2">
+              Localização:{' '}
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-700 font-semibold underline hover:text-amber-900"
+              >
+                R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro
+              </a>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs max-w-lg mx-auto py-1">

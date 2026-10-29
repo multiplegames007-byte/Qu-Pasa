@@ -22,7 +22,7 @@ export const SmsPreviewModal: React.FC<SmsPreviewModalProps> = ({
 
   const smsText =
     reservation.smsMessage ||
-    `Qué Pasa: A sua mesa está confirmada! para ${reservation.date} às ${reservation.time} (${reservation.guests} pax, Mesa ${reservation.tableId}). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: 234 424 208.`;
+    `Qué Pasa: A sua mesa está confirmada! para ${reservation.date} às ${reservation.time} (${reservation.guests} pax, Mesa ${reservation.tableId}). R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro. Tolerância 20m. Tel: 234 424 208.`;
 
   const handleResendClick = async () => {
     if (!onResend) return;

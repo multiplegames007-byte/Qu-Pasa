@@ -40,12 +40,14 @@ export const INITIAL_TABLES: RestaurantTable[] = [
   { id: 12, number: 12, capacity: 3, x: 860, y: 350, radius: 52, isActive: true, section: 'balcao' },
 ];
 
+export const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=R.+Cmte.+Rocha+e+Cunha+3C,+3800-140+Aveiro';
+
 export const INITIAL_SETTINGS: RestaurantSettings = {
   restaurantName: 'Qué Pasa',
   tagline: 'Cozinha de Autor & Petiscos Contemporâneos',
-  address: 'Cais dos Mercantéis, nº 14 (Bairro da Beira-Mar)',
+  address: 'R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro',
   city: 'Aveiro',
-  postalCode: '3800-228',
+  postalCode: '3800-140',
   phone: '234 424 208',
   email: 'reservas@quepasa.pt',
   schedule: [
@@ -67,11 +69,11 @@ export const INITIAL_SETTINGS: RestaurantSettings = {
   noShowGraceMinutes: 20,
   emailTemplates: {
     confirmationSubject: 'Confirmação da sua Reserva - Qué Pasa',
-    confirmationBody: 'Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está confirmada para {DATA} às {HORA}.\nCódigo de reserva: {CODIGO}.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa',
+    confirmationBody: `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está confirmada para {DATA} às {HORA}.\n\nLocalização: R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro (${MAPS_URL})\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa Qué Pasa`,
     reminderSubject: 'Lembrete da sua Reserva amanhã - Qué Pasa',
-    reminderBody: 'Olá {NOME},\n\nLembramos que tem reserva amanhã ({DATA}) às {HORA} para {PESSOAS} pessoas (Mesa {MESA}).\nPor favor confirme ou faça a gestão da sua reserva no nosso website com o código {CODIGO}.\n\nAguardamos por si!',
+    reminderBody: 'Olá {NOME},\n\nLembramos que tem reserva amanhã ({DATA}) às {HORA} para {PESSOAS} pessoas (Mesa {MESA}).\n\nAguardamos por si!',
     cancellationSubject: 'Cancelamento de Reserva - Qué Pasa',
-    cancellationBody: 'Olá {NOME},\n\nA sua reserva {CODIGO} para {DATA} às {HORA} foi cancelada com sucesso.\nEsperamos ter o prazer de o receber numa próxima oportunidade em Aveiro.',
+    cancellationBody: 'Olá {NOME},\n\nA sua reserva para {DATA} às {HORA} foi cancelada com sucesso.\nEsperamos ter o prazer de o receber numa próxima oportunidade em Aveiro.',
     ownerNewBookingSubject: 'Nova Reserva Recebida - Qué Pasa',
     ownerNewBookingBody: 'Caro Dono,\n\nRecebeu uma nova reserva:\nCliente: {NOME}\nTelemóvel: {TELEMOVEL}\nData e Hora: {DATA} às {HORA}\nMesa: {MESA} ({PESSOAS} pax)',
   },
@@ -96,259 +98,31 @@ export function getTomorrowStr(): string {
   return formatDate(d);
 }
 
-// Generate demo reservations based on today's date
+// Clean production state: no fictitious reservations, customers, or waitlist entries
 function getInitialReservations(): Reservation[] {
-  const today = getTodayStr();
-  const tomorrow = getTomorrowStr();
-
-  return [
-    {
-      id: 'res-1',
-      code: 'OQP-7101',
-      date: today,
-      time: '12:30',
-      guests: 2,
-      tableId: 1,
-      customerName: 'Gonçalo Ribeiro',
-      customerPhone: '+351 912 345 678',
-      customerEmail: 'goncalo.ribeiro@exemplo.pt',
-      specialRequests: ['Mesa junto à janela', 'Aniversário'],
-      status: 'concluida',
-      durationMinutes: 90,
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-2',
-      code: 'OQP-7102',
-      date: today,
-      time: '13:00',
-      guests: 4,
-      tableId: 3,
-      customerName: 'Mariana Cerqueira',
-      customerPhone: '+351 934 892 110',
-      customerEmail: 'marianacerqueira@exemplo.pt',
-      specialRequests: ['Cadeira de bebé'],
-      status: 'sentada',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-      source: 'online',
-      internalNotes: 'Cliente habitual, aprecia vinhos naturais.',
-    },
-    {
-      id: 'res-3',
-      code: 'OQP-7103',
-      date: today,
-      time: '13:30',
-      guests: 4,
-      tableId: 5,
-      customerName: 'Tiago Fontes',
-      customerPhone: '+351 961 773 402',
-      customerEmail: 'tiagofontes@exemplo.pt',
-      specialRequests: ['Alergia a marisco e nozes'],
-      status: 'chegou',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      source: 'telefone',
-    },
-    {
-      id: 'res-4',
-      code: 'OQP-7104',
-      date: today,
-      time: '14:00',
-      guests: 2,
-      tableId: 2,
-      customerName: 'Sofia Albuquerque',
-      customerPhone: '+351 925 410 889',
-      customerEmail: 'sofia.albuquerque@exemplo.pt',
-      specialRequests: [],
-      status: 'confirmada',
-      durationMinutes: 90,
-      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-5',
-      code: 'OQP-7105',
-      date: today,
-      time: '20:00',
-      guests: 4,
-      tableId: 7,
-      customerName: 'Duarte Mendonça',
-      customerPhone: '+351 919 663 201',
-      customerEmail: 'duarte.mendonca@exemplo.pt',
-      specialRequests: ['Mobilidade reduzida (fácil acesso)'],
-      status: 'confirmada',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-6',
-      code: 'OQP-7106',
-      date: today,
-      time: '20:30',
-      guests: 6,
-      tableId: 9,
-      customerName: 'Beatriz Vasconcelos',
-      customerPhone: '+351 938 120 445',
-      customerEmail: 'beatriz.v@exemplo.pt',
-      specialRequests: ['Jantar de celebração profissional'],
-      status: 'confirmada',
-      durationMinutes: 120,
-      createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-7',
-      code: 'OQP-7107',
-      date: today,
-      time: '21:00',
-      guests: 4,
-      tableId: 11,
-      customerName: 'Nuno Carvalheiro',
-      customerPhone: '+351 910 554 322',
-      customerEmail: 'nuno.carvalheiro@exemplo.pt',
-      specialRequests: [],
-      status: 'confirmada',
-      durationMinutes: 105,
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      source: 'telefone',
-    },
-    {
-      id: 'res-8',
-      code: 'OQP-7108',
-      date: tomorrow,
-      time: '13:00',
-      guests: 4,
-      tableId: 4,
-      customerName: 'Helena Pires',
-      customerPhone: '+351 966 332 109',
-      customerEmail: 'helena.pires@exemplo.pt',
-      specialRequests: ['Mesa com vista canal'],
-      status: 'confirmada',
-      durationMinutes: 105,
-      createdAt: new Date().toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-9',
-      code: 'OQP-7109',
-      date: tomorrow,
-      time: '20:00',
-      guests: 2,
-      tableId: 1,
-      customerName: 'Pedro Antunes',
-      customerPhone: '+351 917 882 133',
-      customerEmail: 'pedroantunes@exemplo.pt',
-      specialRequests: ['Aniversário de casamento'],
-      status: 'confirmada',
-      durationMinutes: 90,
-      createdAt: new Date().toISOString(),
-      source: 'online',
-    },
-    {
-      id: 'res-10',
-      code: 'OQP-7110',
-      date: tomorrow,
-      time: '20:30',
-      guests: 6,
-      tableId: 10,
-      customerName: 'Rita Sarmento',
-      customerPhone: '+351 933 445 566',
-      customerEmail: 'rita.sarmento@exemplo.pt',
-      specialRequests: ['Intolerância a lactose'],
-      status: 'confirmada',
-      durationMinutes: 120,
-      createdAt: new Date().toISOString(),
-      source: 'online',
-    },
-  ];
+  return [];
 }
 
-const INITIAL_CUSTOMERS: CustomerProfile[] = [
-  {
-    id: 'cust-1',
-    name: 'Mariana Cerqueira',
-    phone: '+351 934 892 110',
-    email: 'marianacerqueira@exemplo.pt',
-    isVip: true,
-    visitsCount: 7,
-    noShowCount: 0,
-    allergies: ['Frutos secos'],
-    internalNotes: 'Cliente muito simpática, prefere mesas junto à janela e vinhos da Bairrada.',
-    lastVisit: getTodayStr(),
-    gdprConsentDate: '2026-02-10T14:30:00Z',
-  },
-  {
-    id: 'cust-2',
-    name: 'Gonçalo Ribeiro',
-    phone: '+351 912 345 678',
-    email: 'goncalo.ribeiro@exemplo.pt',
-    isVip: false,
-    visitsCount: 3,
-    noShowCount: 0,
-    allergies: [],
-    internalNotes: 'Visita frequentemente ao almoço.',
-    lastVisit: getTodayStr(),
-    gdprConsentDate: '2026-03-01T10:20:00Z',
-  },
-  {
-    id: 'cust-3',
-    name: 'Tiago Fontes',
-    phone: '+351 961 773 402',
-    email: 'tiagofontes@exemplo.pt',
-    isVip: false,
-    visitsCount: 2,
-    noShowCount: 0,
-    allergies: ['Marisco', 'Nozes'],
-    internalNotes: 'Atenção às contaminações cruzadas na cozinha.',
-    lastVisit: getTodayStr(),
-    gdprConsentDate: '2026-04-12T18:00:00Z',
-  },
-  {
-    id: 'cust-4',
-    name: 'Beatriz Vasconcelos',
-    phone: '+351 938 120 445',
-    email: 'beatriz.v@exemplo.pt',
-    isVip: true,
-    visitsCount: 11,
-    noShowCount: 0,
-    allergies: [],
-    internalNotes: 'Organiza almoços e jantares empresariais. Atendimento prioritário.',
-    lastVisit: '2026-10-15',
-    gdprConsentDate: '2026-01-15T09:15:00Z',
-  },
-  {
-    id: 'cust-5',
-    name: 'Carlos Mesquita',
-    phone: '+351 915 221 009',
-    email: 'carlos.mesquita@exemplo.pt',
-    isVip: false,
-    visitsCount: 1,
-    noShowCount: 1,
-    allergies: [],
-    internalNotes: 'Faltou sem avisar uma vez no mês anterior.',
-    lastVisit: '2026-09-20',
-    gdprConsentDate: '2026-05-18T12:00:00Z',
-  },
-];
+const INITIAL_CUSTOMERS: CustomerProfile[] = [];
 
-const INITIAL_WAITLIST: WaitlistEntry[] = [
-  {
-    id: 'wait-1',
-    date: getTodayStr(),
-    shift: 'jantar',
-    preferredTime: '20:30',
-    guests: 4,
-    customerName: 'António Faria',
-    customerPhone: '+351 922 401 988',
-    customerEmail: 'antonio.faria@exemplo.pt',
-    notes: 'Aceita qualquer mesa livre entre 20h e 21h',
-    status: 'em_espera',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-];
+const INITIAL_WAITLIST: WaitlistEntry[] = [];
+
+// One-time cleanup of any legacy fictitious data in browser localStorage for launch
+const LAUNCH_CLEAN_KEY = 'oqp_launch_clean_v3';
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  try {
+    if (localStorage.getItem(LAUNCH_CLEAN_KEY) !== 'true') {
+      localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.WAITLIST, JSON.stringify([]));
+      localStorage.removeItem(STORAGE_KEYS.HOLDS);
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(INITIAL_SETTINGS));
+      localStorage.setItem(LAUNCH_CLEAN_KEY, 'true');
+    }
+  } catch {
+    // ignore storage errors in restricted environments
+  }
+}
 
 // Broadcast channel for instantaneous cross-tab and component synchronization
 const storageChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window 
@@ -438,7 +212,7 @@ export function addReservation(reservation: Omit<Reservation, 'id' | 'code' | 'c
     smsSent: true,
     smsSentAt: new Date().toISOString(),
     smsPhone: reservation.customerPhone,
-    smsMessage: `Qué Pasa: A sua mesa está confirmada! para ${reservation.date} às ${reservation.time} (${reservation.guests} pax, Mesa ${reservation.tableId}). Cais dos Mercantéis 14, Aveiro. Tolerância 20m. Tel: 234 424 208.`,
+    smsMessage: `Qué Pasa: A sua mesa está confirmada! para ${reservation.date} às ${reservation.time} (${reservation.guests} pax, Mesa ${reservation.tableId}). R. Cmte. Rocha e Cunha 3C, 3800-140 Aveiro. Tolerância 20m. Tel: 234 424 208.`,
     emailSent: true,
     emailSentAt: new Date().toISOString(),
     emailAddress: reservation.customerEmail,
@@ -901,7 +675,7 @@ export function generateIcsFile(res: Reservation): void {
     `DTEND:${dtEnd}`,
     `SUMMARY:Reserva em Qué Pasa (${res.guests} pax)`,
     `DESCRIPTION:Reserva confirmada no restaurante Qué Pasa.\\nCódigo: ${res.code}\\nMesa nº: ${res.tableId}\\nPessoas: ${res.guests}\\nPedidos: ${res.specialRequests.join(', ') || 'Nenhum'}`,
-    'LOCATION:Cais dos Mercantéis\\, nº 14\\, 3800-228 Aveiro\\, Portugal',
+    'LOCATION:R. Cmte. Rocha e Cunha 3C\\, 3800-140 Aveiro\\, Portugal',
     'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR',
