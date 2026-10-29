@@ -31,7 +31,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
         {/* Content */}
         <div className="px-6 py-5 overflow-y-auto space-y-4 text-sm text-slate-600 leading-relaxed">
           <p>
-            O restaurante <strong>Qué Pasa</strong> (sito no Cais dos Mercantéis, nº 14, 3800-228 Aveiro) está comprometido com a proteção e confidencialidade dos seus dados pessoais, em estrito cumprimento com o Regulamento Geral sobre a Proteção de Dados (RGPD - Regulamento UE 2016/679).
+            O restaurante <strong>Qué Pasa</strong> está comprometido com a proteção e confidencialidade dos seus dados pessoais, em estrito cumprimento com o Regulamento Geral sobre a Proteção de Dados (RGPD - Regulamento UE 2016/679).
           </p>
 
           <h4 className="font-semibold text-slate-800 text-sm pt-1">1. Finalidade do Tratamento</h4>

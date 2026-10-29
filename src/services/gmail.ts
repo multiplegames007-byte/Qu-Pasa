@@ -183,8 +183,7 @@ export function generateReservationHtmlEmail(reservation: Reservation): string {
       <!-- Location Info -->
       <div style="background:#152e4d;border-radius:16px;padding:18px;margin-bottom:24px;text-align:center;font-size:13px;color:#cbd5e1;">
         <p style="margin:0 0 6px 0;font-weight:700;color:#ffffff;">📍 Morada & Tolerância de Chegada</p>
-        <p style="margin:0 0 4px 0;">Cais dos Mercantéis, nº 14 · 3800-225 Aveiro</p>
-        <p style="margin:0;color:#94a3b8;font-size:12px;">Guardamos a sua mesa durante <strong>20 minutos</strong> a partir da hora marcada.</p>
+        <p style="margin:0;color:#94a3b8;font-size:12px;">Guardamos a sua mesa durante <strong>20 minutos</strong> a partir da hora marcada. Caso se atrase, contacte <strong>234 424 208</strong>.</p>
       </div>
 
       <!-- Contact assistance -->

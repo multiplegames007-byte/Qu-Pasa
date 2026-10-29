@@ -74,13 +74,10 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
 
       {/* 3. Sleek Minimalist Login Box */}
       <div className="relative z-10 w-full max-w-sm mx-auto bg-black/60 backdrop-blur-xl border border-white/15 p-6 sm:p-8 rounded-3xl shadow-2xl">
-        <div className="text-center mb-6">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold block mb-1">
-            Área Reservada
-          </span>
-          <h2 className="text-xl font-bold text-white tracking-wide">
-            Administração Qué Pasa
-          </h2>
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
+            <Lock className="w-5 h-5" />
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

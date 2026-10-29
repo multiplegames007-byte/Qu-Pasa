@@ -308,13 +308,11 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
       return;
     }
 
-    // Sort: least wasted seats first, then window preference
+    // Sort: least wasted seats first, then table number
     chosenList.sort((a, b) => {
       const diffA = Math.abs(a.capacity - guests);
       const diffB = Math.abs(b.capacity - guests);
       if (diffA !== diffB) return diffA - diffB;
-      if (a.section === 'janela' && b.section !== 'janela') return -1;
-      if (b.section === 'janela' && a.section !== 'janela') return 1;
       return a.number - b.number;
     });
 
@@ -895,7 +893,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
                   >
                     <span className="text-sm font-black">Mesa {t.number}</span>
                     <span className="text-[10px] font-semibold opacity-90 mt-0.5">
-                      {t.capacity} lug. {t.section === 'janela' ? '· Janela' : t.section === 'balcao' ? '· Balcão' : '· Sala'}
+                      {t.capacity} Lugares
                     </span>
                   </button>
                 );
@@ -913,44 +911,6 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
               tableAvailabilityMap={tableAvailabilityMap}
             />
           </div>
-
-          {/* Selected Table Confirmation Strip */}
-          {selectedTable ? (
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/90 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-lg shadow-sm shrink-0">
-                  {selectedTable.number}
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <span>Mesa {selectedTable.number} Selecionada</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900">
-                      {selectedTable.capacity} Lugares
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-slate-600 mt-0.5">
-                    {selectedTable.section === 'janela'
-                      ? '🌅 Zona da Janela · Vista Panorâmica Canal de Aveiro'
-                      : selectedTable.section === 'balcao'
-                      ? '🍸 Zona do Balcão · Cocktails & Petiscos Nikkei'
-                      : '🏮 Sala Principal Nikkei · Ambiente Qué Pasa'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(5)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shrink-0 shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Continuar com Mesa {selectedTable.number}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
-              👆 Toque numa das mesas verdes na planta interativa acima para selecionar o seu lugar.
-            </div>
-          )}
 
           <div className="pt-2 flex justify-between">
             <button
@@ -1187,7 +1147,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ onSuccessReturnHom
           <div className="p-4 bg-sky-50 border border-sky-100 rounded-xl text-xs text-sky-900 space-y-1">
             <span className="font-bold block">Tolerância de Chegada:</span>
             <span>
-              Reservamos a sua mesa durante <strong>{config.noShowGraceMinutes} minutos</strong> a partir da hora marcada. Em caso de atraso imprevisto, contacte-nos pelo {config.phone}.
+              Reservamos a sua mesa durante <strong>{config.noShowGraceMinutes || 20} minutos</strong> a partir da hora marcada. Em caso de atraso imprevisto, contacte-nos pelo <strong>234 424 208</strong>.
             </span>
           </div>
 

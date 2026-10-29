@@ -131,7 +131,7 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
           {/* Useful notes */}
           <div className="text-xs text-slate-500 space-y-2 border-t border-slate-100 pt-4">
             <p>
-              • <strong>Tolerância de chegada:</strong> {settings.noShowGraceMinutes} minutos a partir da hora marcada. Caso se atrase, agradecemos que nos contacte por telefone para {settings.phone}.
+              • <strong>Tolerância de chegada:</strong> {settings.noShowGraceMinutes || 20} minutos a partir da hora marcada. Caso se atrase, agradecemos que nos contacte por telefone para <strong>{settings.phone || '234 424 208'}</strong>.
             </p>
             <p>
               • <strong>Alterações ou cancelamento:</strong> Pode gerir a sua reserva em qualquer altura no nosso site através do código <strong>{reservation.code}</strong> e do seu telemóvel.

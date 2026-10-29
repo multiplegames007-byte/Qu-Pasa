@@ -200,55 +200,36 @@ export const ManualReservationModal: React.FC<ManualReservationModalProps> = ({
             </div>
           )}
 
-          {/* Source Selector */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1.5">
-              Origem da Reserva
-            </label>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setSource('telefone')}
-                className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
-                  source === 'telefone'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400'
-                    : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400'
-                }`}
-              >
-                📞 Telefone
-              </button>
-              <button
-                type="button"
-                onClick={() => setSource('presencial')}
-                className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
-                  source === 'presencial'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400'
-                    : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400'
-                }`}
-              >
-                🚶 Presencial (Balcão)
-              </button>
-            </div>
-          </div>
-
-          {/* Status selector (available especially when editing) */}
-          {isEditing && (
+          {/* Source Selector (apenas para nova reserva) */}
+          {!isEditing && (
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1.5">
-                Estado da Reserva
+                Origem da Reserva
               </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as Reservation['status'])}
-                className="w-full px-3 py-2.5 text-base sm:text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl dark:text-white font-medium"
-              >
-                <option value="confirmada">Confirmada</option>
-                <option value="chegou">Chegou (À espera de mesa)</option>
-                <option value="sentada">Sentada (Em serviço)</option>
-                <option value="concluida">Concluída (Finalizada)</option>
-                <option value="cancelada">Cancelada</option>
-                <option value="noshow">Falta de Comparência (No-Show)</option>
-              </select>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSource('telefone')}
+                  className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                    source === 'telefone'
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400'
+                      : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400'
+                  }`}
+                >
+                  📞 Telefone
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSource('presencial')}
+                  className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                    source === 'presencial'
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400'
+                      : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400'
+                  }`}
+                >
+                  🚶 Presencial (Balcão)
+                </button>
+              </div>
             </div>
           )}
 

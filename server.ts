@@ -666,9 +666,41 @@ function generateConfirmationEmail(res: Reservation, settings: RestaurantSetting
   const restName = settings.restaurantName || 'Qué Pasa';
   const template = settings.emailTemplates || {};
   let subject = template.confirmationSubject || `Confirmação da sua Reserva - ${restName}`;
-  subject = subject.replace('{CODIGO}', res.code);
+  subject = subject
+    .replace(/{CODIGO}/g, res.code)
+    .replace(/{NOME}/g, res.customerName)
+    .replace(/{DATA}/g, res.date)
+    .replace(/{HORA}/g, res.time)
+    .replace(/{MESA}/g, String(res.tableId))
+    .replace(/{PESSOAS}/g, String(res.guests));
 
-  let body = template.confirmationBody || `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos.\n\nAté breve,\nEquipa ${restName}`;
+  let body = template.confirmationBody || `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos (Contacto para atrasos: 234 424 208).\n\nAté breve,\nEquipa ${restName}`;
+  body = body
+    .replace(/{NOME}/g, res.customerName)
+    .replace(/{PESSOAS}/g, String(res.guests))
+    .replace(/{DATA}/g, res.date)
+    .replace(/{HORA}/g, res.time)
+    .replace(/{CODIGO}/g, res.code)
+    .replace(/{MESA}/g, String(res.tableId));
+
+  return { subject, body };
+}
+
+function generateCancellationEmail(res: Reservation, settings: RestaurantSettings): { subject: string; body: string } {
+  const restName = settings.restaurantName || 'Qué Pasa';
+  const template = settings.emailTemplates || {};
+  let subject = template.cancellationSubject || `Reserva Cancelada · ${restName}`;
+  subject = subject
+    .replace(/{CODIGO}/g, res.code)
+    .replace(/{NOME}/g, res.customerName)
+    .replace(/{DATA}/g, res.date)
+    .replace(/{HORA}/g, res.time)
+    .replace(/{MESA}/g, String(res.tableId))
+    .replace(/{PESSOAS}/g, String(res.guests));
+
+  let body =
+    template.cancellationBody ||
+    `Olá {NOME},\n\nA sua reserva no ${restName} para {PESSOAS} pessoas no dia {DATA} às {HORA} (Mesa {MESA}, Código {CODIGO}) foi cancelada.\n\nEsperamos ter a oportunidade de o receber numa próxima ocasião.\n\nCom os melhores cumprimentos,\nA equipa do ${restName}`;
   body = body
     .replace(/{NOME}/g, res.customerName)
     .replace(/{PESSOAS}/g, String(res.guests))
@@ -768,7 +800,7 @@ async function dispatchEmail(
           </div>
           <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; font-size: 12px; color: #94a3b8;">
             <p style="margin: 0;">Cais dos Mercantéis, nº 14 · Aveiro</p>
-            <p style="margin: 4px 0 0 0;">Telefone: +351 234 382 190</p>
+            <p style="margin: 4px 0 0 0;">Telefone: 234 424 208</p>
           </div>
         </div>
       `;
@@ -807,7 +839,7 @@ async function dispatchEmail(
             </div>
             <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; font-size: 12px; color: #94a3b8;">
               <p style="margin: 0;">Cais dos Mercantéis, nº 14 · Aveiro</p>
-              <p style="margin: 4px 0 0 0;">Telefone: +351 234 382 190</p>
+              <p style="margin: 4px 0 0 0;">Telefone: 234 424 208</p>
             </div>
           </div>
         `,
@@ -865,17 +897,62 @@ async function dispatchEmail(
 }
 
 // ============================================================================
-// N8N WEBHOOK INTEGRATION (NOVA RESERVA)
+// N8N WEBHOOK INTEGRATION (NOVA RESERVA & CANCELAMENTO)
 // ============================================================================
 const N8N_RESERVATION_WEBHOOK_URL = 'https://simaoramos.app.n8n.cloud/webhook/nova-reserva';
 
-async function sendReservationWebhook(reservation: Reservation): Promise<void> {
+async function sendReservationWebhook(
+  reservation: Reservation,
+  eventType: 'nova_reserva' | 'cancelamento_reserva' = 'nova_reserva'
+): Promise<void> {
   try {
-    console.log(`[N8N WEBHOOK] A disparar pedido POST para ${N8N_RESERVATION_WEBHOOK_URL} (Reserva: ${reservation.code || reservation.id})...`);
+    console.log(`[N8N WEBHOOK] A disparar pedido POST para ${N8N_RESERVATION_WEBHOOK_URL} (Evento: ${eventType}, Reserva: ${reservation.code || reservation.id})...`);
+
+    // 1. Obter a configuração persistida mais recente a partir do armazenamento do servidor
+    const freshDb = loadDb();
+    const settings = freshDb?.settings || ({} as RestaurantSettings);
+    const restName = settings.restaurantName || 'Qué Pasa';
+    const templates = settings.emailTemplates || {};
+
+    // 2. Modelos brutos com marcadores {NOME}, {PESSOAS}, {DATA}, etc. preservados
+    const defaultConfirmationSubject = `Confirmação da sua Reserva - ${restName}`;
+    const defaultConfirmationBody = `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos (Contacto para atrasos: 234 424 208).\n\nAté breve,\nEquipa ${restName}`;
+
+    const defaultCancellationSubject = `Reserva Cancelada · ${restName}`;
+    const defaultCancellationBody = `Olá {NOME},\n\nA sua reserva no ${restName} para {PESSOAS} pessoas no dia {DATA} às {HORA} (Mesa {MESA}, Código {CODIGO}) foi cancelada.\n\nEsperamos ter a oportunidade de o receber numa próxima ocasião.\n\nCom os melhores cumprimentos,\nA equipa do ${restName}`;
+
+    const confirmationSubjectTemplate = (templates.confirmationSubject || defaultConfirmationSubject).trim();
+    const confirmationBodyTemplate = (templates.confirmationBody || defaultConfirmationBody).trim();
+    const cancellationSubjectTemplate = (templates.cancellationSubject || defaultCancellationSubject).trim();
+    const cancellationBodyTemplate = (templates.cancellationBody || defaultCancellationBody).trim();
+
+    const emailTemplates = {
+      confirmationSubject: confirmationSubjectTemplate,
+      confirmationBody: confirmationBodyTemplate,
+      cancellationSubject: cancellationSubjectTemplate,
+      cancellationBody: cancellationBodyTemplate,
+    };
+
+    // 3. Selecionar o assunto e corpo correspondentes ao evento atual e substituir os marcadores para o cliente
+    const isCancellation = eventType === 'cancelamento_reserva';
+    const activeEmailData = isCancellation
+      ? generateCancellationEmail(reservation, settings)
+      : generateConfirmationEmail(reservation, settings);
 
     const payload = {
-      event: 'nova_reserva',
+      event: eventType,
+      evento: eventType,
       timestamp: new Date().toISOString(),
+
+      // Assunto e corpo já selecionados e preenchidos especificamente para este evento
+      assunto_email: activeEmailData.subject,
+      corpo_email: activeEmailData.body,
+      email_subject: activeEmailData.subject,
+      email_body: activeEmailData.body,
+
+      // Modelos configurados pelo administrador no painel (com marcadores intactos)
+      emailTemplates,
+
       // Campos diretos para mapeamento simples nos nós da n8n
       id: reservation.id,
       codigo: reservation.code,
@@ -894,9 +971,10 @@ async function sendReservationWebhook(reservation: Reservation): Promise<void> {
       notas: reservation.notes || '',
       notas_internas: reservation.internalNotes || '',
       origem: reservation.source || 'online',
-      estado: reservation.status,
+      estado: isCancellation ? 'cancelada' : reservation.status,
       duracao_minutos: reservation.durationMinutes,
       criado_em: reservation.createdAt,
+
       // Objeto de reserva completo estruturado
       reservation: {
         id: reservation.id,
@@ -911,7 +989,7 @@ async function sendReservationWebhook(reservation: Reservation): Promise<void> {
         specialRequests: reservation.specialRequests,
         notes: reservation.notes || '',
         internalNotes: reservation.internalNotes || '',
-        status: reservation.status,
+        status: isCancellation ? 'cancelada' : reservation.status,
         durationMinutes: reservation.durationMinutes,
         source: reservation.source || 'online',
         createdAt: reservation.createdAt,
@@ -930,10 +1008,11 @@ async function sendReservationWebhook(reservation: Reservation): Promise<void> {
     if (!response.ok) {
       console.warn(`[N8N WEBHOOK WARNING] Servidor n8n respondeu com status ${response.status}: ${response.statusText}`);
     } else {
-      console.log(`[N8N WEBHOOK SUCCESS] Pedido POST entregue com sucesso à n8n (status ${response.status})!`);
+      console.log(`[N8N WEBHOOK SUCCESS] Pedido POST (${eventType}) entregue com sucesso à n8n (status ${response.status})!`);
     }
   } catch (err: any) {
-    console.error(`[N8N WEBHOOK ERROR] Erro no envio do webhook n8n:`, err?.message || err);
+    // Tratamento de erros resiliente: falhas no envio do webhook nunca bloqueiam a criação/gestão de reservas
+    console.error(`[N8N WEBHOOK ERROR] Erro não bloqueante no envio do webhook n8n (${eventType}):`, err?.message || err);
   }
 }
 
@@ -1512,6 +1591,13 @@ app.patch('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, 
     ...req.body,
   };
 
+  // If status changed to cancelada, notify n8n with cancellation email template
+  if (req.body.status === 'cancelada' && oldStatus !== 'cancelada') {
+    sendReservationWebhook(state.reservations[index], 'cancelamento_reserva').catch((err) => {
+      console.error('[N8N CANCEL DISPATCH ERROR]', err);
+    });
+  }
+
   // If status changed to concluida, send completion SMS and thank-you Email
   if (req.body.status === 'concluida' && oldStatus !== 'concluida' && !state.reservations[index].completionSmsSent) {
     const resItem = state.reservations[index];
@@ -1661,6 +1747,13 @@ app.post('/api/admin/reservations/:id/send-reminder', requireOwnerAuth, async (r
 app.delete('/api/admin/reservations/:id', requireOwnerAuth, (req: Request, res: Response) => {
   const { id } = req.params;
   const state = loadDb();
+  const resItem = state.reservations.find((r) => r.id === id);
+  if (resItem) {
+    const cancelledRes: Reservation = { ...resItem, status: 'cancelada' };
+    sendReservationWebhook(cancelledRes, 'cancelamento_reserva').catch((err) => {
+      console.error('[N8N DELETE/CANCEL DISPATCH ERROR]', err);
+    });
+  }
   state.reservations = state.reservations.filter((r) => r.id !== id);
   saveDb(state);
   res.json({ success: true });

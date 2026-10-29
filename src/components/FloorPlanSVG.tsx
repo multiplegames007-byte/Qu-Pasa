@@ -283,29 +283,8 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
           <rect x="0" y="0" width="1000" height="640" fill="url(#floorGrad)" />
           <rect x="0" y="0" width="1000" height="640" fill="url(#gridPattern)" />
 
-          {/* Exterior / Canal Panoramic Windows (Left Edge) */}
-          <g>
-            <rect x="0" y="0" width="45" height="640" fill="url(#canalWater)" />
-            <line x1="45" y1="0" x2="45" y2="640" stroke="#38BDF8" strokeWidth="3" strokeDasharray="12 4" />
-            
-            {/* Water ripples and Canal label */}
-            <path d="M 12 100 Q 25 120 12 140 T 12 180" fill="none" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.5" />
-            <path d="M 18 300 Q 30 320 18 340 T 18 380" fill="none" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.5" />
-            <path d="M 12 500 Q 25 520 12 540 T 12 580" fill="none" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.5" />
-
-            <text
-              x="25"
-              y="320"
-              transform="rotate(-90, 25, 320)"
-              textAnchor="middle"
-              fill="#7DD3FC"
-              fontSize="11"
-              fontWeight="600"
-              letterSpacing="3"
-            >
-              CANAL DE AVEIRO · RIA (VISTA PANORÂMICA)
-            </text>
-          </g>
+          {/* Room Boundary Wall */}
+          <rect x="2" y="2" width="996" height="636" rx="12" fill="none" stroke="#334155" strokeWidth="2.5" />
 
           {/* Architectural Elements */}
 
@@ -411,30 +390,6 @@ export const FloorPlanSVG: React.FC<FloorPlanSVGProps> = ({
               );
             })}
 
-          {/* Authentic Qué Pasa Zone Boundaries & Labels */}
-          {/* Zona 1: Janela / Ria de Aveiro (Mesas 1 a 4) */}
-          <g opacity="0.9">
-            <rect x="70" y="58" width="220" height="22" rx="11" fill="#032b43" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.6" />
-            <text x="180" y="72" textAnchor="middle" fill="#7DD3FC" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
-              ZONA JANELA · RIA DE AVEIRO
-            </text>
-          </g>
-
-          {/* Zona 2: Sala Principal Nikkei (Mesas 5 a 10) */}
-          <g opacity="0.9">
-            <rect x="400" y="58" width="220" height="22" rx="11" fill="#1e1b4b" stroke="#818CF8" strokeWidth="1" strokeOpacity="0.6" />
-            <text x="510" y="72" textAnchor="middle" fill="#C7D2FE" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
-              SALA PRINCIPAL NIKKEI
-            </text>
-          </g>
-
-          {/* Zona 3: Balcão & Petiscos (Mesas 11 e 12) */}
-          <g opacity="0.9">
-            <rect x="750" y="75" width="170" height="22" rx="11" fill="#3b2003" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.6" />
-            <text x="835" y="89" textAnchor="middle" fill="#FDE68A" fontSize="9.5" fontWeight="700" letterSpacing="1.5">
-              BALCÃO & PETISCOS
-            </text>
-          </g>
 
           {/* THE 12 CIRCULAR TABLES */}
           {tables.map((table) => {

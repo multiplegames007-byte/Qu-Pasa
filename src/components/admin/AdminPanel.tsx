@@ -87,9 +87,7 @@ type AdminSection =
   | 'dashboard'
   | 'reservas'
   | 'mesas'
-  | 'clientes'
   | 'estatisticas'
-  | 'notificacoes'
   | 'configuracoes';
 
 const N8N_WEBHOOK_URL = 'https://simaoramos.app.n8n.cloud/webhook/nova-reserva';
@@ -98,6 +96,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   // Navigation & UI State
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Core Data States
@@ -134,7 +133,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   const [resSearchQuery, setResSearchQuery] = useState('');
   const [resStatusFilter, setResStatusFilter] = useState<string>('todas');
   const [resPaxFilter, setResPaxFilter] = useState<string>('todos');
-  const [resDateFilter, setResDateFilter] = useState<'todas' | 'hoje' | 'amanha' | 'semana'>('todas');
+  const [resDateFilter, setResDateFilter] = useState<'hoje' | 'amanha' | 'semana' | 'todas'>('hoje');
 
   // Customers View State
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -169,6 +168,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   } | null>(null);
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Push notifications permission
   const [pushEnabled, setPushEnabled] = useState(
@@ -234,7 +234,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       setTables(data.tables);
       setReservations(data.reservations);
       setCustomers(data.customers);
-      setSettings(data.settings);
+      setSettings((prev) => {
+        if (!prev) return data.settings;
+        if (activeSection === 'configuracoes') return prev;
+        return data.settings;
+      });
       setBlockedPeriods(data.blockedPeriods);
       setNotifications(data.notifications);
 
@@ -474,7 +478,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       }
 
       // Status filter
-      if (resStatusFilter !== 'todas' && r.status !== resStatusFilter) return false;
+      if (resStatusFilter !== 'todas') {
+        if (resStatusFilter === 'chegou') {
+          if (!['chegou', 'concluida', 'sentada'].includes(r.status)) return false;
+        } else if (resStatusFilter === 'cancelada') {
+          if (r.status !== 'cancelada') return false;
+        } else if (resStatusFilter === 'noshow') {
+          if (r.status !== 'noshow') return false;
+        } else if (r.status !== resStatusFilter) {
+          return false;
+        }
+      }
 
       // Pax filter
       if (resPaxFilter === '1-2' && r.guests > 2) return false;
@@ -561,31 +575,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
 
-  // Status badge styling helper
+  // Status badge styling helper - Apenas Chegou, Cancelada ou Falta de Comparência
   const renderStatusBadge = (status: ReservationStatus) => {
     switch (status) {
+      case 'chegou':
+      case 'concluida':
       case 'sentada':
         return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
-            Sentada
-          </span>
-        );
-      case 'chegou':
-        return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-            Chegou
-          </span>
-        );
-      case 'confirmada':
-        return (
           <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-            Confirmada
-          </span>
-        );
-      case 'concluida':
-        return (
-          <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300">
-            Concluída
+            Chegou
           </span>
         );
       case 'cancelada':
@@ -597,9 +595,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       case 'noshow':
         return (
           <span className="font-sans font-bold text-[12px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
-            No-Show
+            Falta de Comparência
           </span>
         );
+      case 'confirmada':
       case 'pendente':
       default:
         return (
@@ -615,9 +614,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
     dashboard: 'Dashboard',
     reservas: 'Reservas',
     mesas: 'Mesas e Ocupação',
-    clientes: 'Clientes',
     estatisticas: 'Estatísticas e Relatórios',
-    notificacoes: 'Notificações',
     configuracoes: 'Configurações',
   };
 
@@ -768,37 +765,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             </span>
           </button>
 
-          {/* 4. Clientes */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveSection('clientes');
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
-              activeSection === 'clientes'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Users className="w-4 h-4 shrink-0" />
-              <span>Clientes</span>
-            </div>
-            {customers.length > 0 && (
-              <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
-                  activeSection === 'clientes'
-                    ? 'bg-neutral-950/20 text-neutral-950'
-                    : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                {customers.length}
-              </span>
-            )}
-          </button>
-
-          {/* 5. Estatísticas e Relatórios */}
+          {/* 4. Estatísticas e Relatórios */}
           <button
             type="button"
             onClick={() => {
@@ -817,31 +784,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
             </div>
           </button>
 
-          {/* 6. Notificações */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveSection('notificacoes');
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
-              activeSection === 'notificacoes'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Bell className="w-4 h-4 shrink-0" />
-              <span>Notificações</span>
-            </div>
-            {unreadNotificationsCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 text-[10px] font-bold flex items-center justify-center tabular-nums">
-                {unreadNotificationsCount}
-              </span>
-            )}
-          </button>
-
-          {/* 7. Configurações */}
+          {/* 5. Configurações */}
           <button
             type="button"
             onClick={() => {
@@ -894,27 +837,103 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
       {/* 2. MAIN CONTAINER (BARRA SUPERIOR + CONTEÚDO PRINCIPAL)                    */}
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* BARRA SUPERIOR (TOP BAR) - APENAS DASHBOARD E OS 3 TRAÇOS */}
+        {/* BARRA SUPERIOR (TOP BAR) - TÍTULO DA SECÇÃO + NOTIFICAÇÕES + 3 BARRAS */}
         <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-xs">
-          {/* Left: APENAS "Dashboard" */}
+          {/* Left: Título da secção ativa */}
           <h2 className="font-serif-display text-2xl sm:text-[28px] text-slate-900 font-normal leading-tight tracking-tight">
-            Dashboard
+            {sectionTitleMap[activeSection] || 'Dashboard'}
           </h2>
 
-          {/* Right: APENAS os 3 traços para abrir o Menu de Páginas */}
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen((prev) => !prev)}
-            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all cursor-pointer border border-slate-200 flex items-center justify-center shrink-0 shadow-xs"
-            title="Abrir Menu de Páginas"
-            aria-label="Abrir Menu de Páginas"
-          >
-            <div className="w-5 h-4 flex flex-col justify-between items-center py-0.5" aria-hidden="true">
-              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
-              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
-              <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+          {/* Right: Notificações à esquerda das 3 barras + Menu de Páginas */}
+          <div className="flex items-center gap-2">
+            {/* Notificações com Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowNotificationsDropdown((prev) => !prev)}
+                className="relative p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all cursor-pointer border border-slate-200 flex items-center justify-center shrink-0 shadow-xs"
+                title="Notificações"
+                aria-label="Notificações"
+              >
+                <Bell className="w-5 h-5 text-slate-700" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-amber-500 text-neutral-950 text-[10px] font-bold flex items-center justify-center tabular-nums shadow-xs animate-pulse">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Popover flutuante de Notificações */}
+              {showNotificationsDropdown && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl z-50 overflow-hidden font-sans">
+                  <div className="p-3.5 sm:p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-amber-600" />
+                      <h4 className="font-bold text-sm text-slate-900">Notificações</h4>
+                      {unreadNotificationsCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold">
+                          {unreadNotificationsCount} novas
+                        </span>
+                      )}
+                    </div>
+                    {unreadNotificationsCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await markOwnerNotificationsRead();
+                          showToast('Notificações marcadas como vistas');
+                          loadAll();
+                        }}
+                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                      >
+                        Marcar como visto
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs">
+                        Sem notificações no momento.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={`top-notif-${n.id}`}
+                          className={`p-3.5 text-xs space-y-1 transition-colors ${
+                            !n.isRead ? 'bg-amber-50/70' : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-900">{n.title}</span>
+                            <span className="text-[10px] text-slate-400 tabular-nums">
+                              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 text-[11px] leading-relaxed">{n.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </button>
+
+            {/* Menu de Páginas (3 barras) */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all cursor-pointer border border-slate-200 flex items-center justify-center shrink-0 shadow-xs"
+              title="Abrir Menu de Páginas"
+              aria-label="Abrir Menu de Páginas"
+            >
+              <div className="w-5 h-4 flex flex-col justify-between items-center py-0.5" aria-hidden="true">
+                <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+                <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+                <span className="w-full h-0.5 bg-slate-800 rounded-full transition-all"></span>
+              </div>
+            </button>
+          </div>
         </header>
 
         {/* ========================================================================= */}
@@ -985,31 +1004,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     }}
                     className="px-3 py-1.5 text-xs font-sans font-medium tabular-nums bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowBlockModal(true)}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    Bloquear Período
-                  </button>
                 </div>
               </div>
 
-              {/* 4 Indicadores Principais (KPIs) */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {/* 3 Indicadores Principais (KPIs) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 {/* 1. Reservas de hoje */}
                 <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
-                      Reservas de Hoje
+                      Reservas do Dia
                     </span>
                     <CalendarDays className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="font-sans font-bold text-[32px] tabular-nums text-slate-900 leading-none">
-                    {daySummary.totalReservations}
+                    {todayReservations.filter((r) => r.status !== 'cancelada').length}
                   </div>
                   <p className="font-sans font-normal text-xs text-slate-400">
-                    Marcações agendadas para o dia
+                    Marcações ativas para o dia
                   </p>
                 </div>
 
@@ -1022,30 +1034,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     <Users className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div className="font-sans font-bold text-[32px] tabular-nums text-emerald-700 leading-none">
-                    {daySummary.expectedGuests}
+                    {todayReservations
+                      .filter((r) => r.status !== 'cancelada' && r.status !== 'noshow')
+                      .reduce((acc, r) => acc + r.guests, 0)}
                   </div>
                   <p className="font-sans font-normal text-xs text-slate-400">
-                    Total de lugares ocupados hoje
+                    Total de clientes esperados hoje
                   </p>
                 </div>
 
-                {/* 3. Reservas pendentes de confirmação */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
-                      Pendentes / A Confirmar
-                    </span>
-                    <Clock className="w-4 h-4 text-sky-600" />
-                  </div>
-                  <div className="font-sans font-bold text-[32px] tabular-nums text-sky-700 leading-none">
-                    {pendingReservationsCount}
-                  </div>
-                  <p className="font-sans font-normal text-xs text-slate-400">
-                    A aguardar validação ou chegada
-                  </p>
-                </div>
-
-                {/* 4. Taxa de ocupação prevista */}
+                {/* 3. Taxa de ocupação prevista */}
                 <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-slate-500">
@@ -1064,16 +1062,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
               {/* Área Principal & Área Secundária */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* ÁREA PRINCIPAL: Próximas Reservas do Dia */}
+                {/* ÁREA PRINCIPAL: Reservas do Dia com opções de Assinalar Chegou ou Cancelar */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-sans font-bold text-lg text-slate-900">
-                          Próximas Reservas ({selectedDate})
+                          Reservas do Dia ({selectedDate})
                         </h3>
                         <p className="font-sans font-normal text-xs text-slate-500">
-                          Ordenadas por horário cronológico de chegada.
+                          Todas as reservas do dia com ações rápidas para assinalar chegada ou cancelar.
                         </p>
                       </div>
                       <span className="font-sans font-bold text-xs uppercase px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
@@ -1099,7 +1097,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                 </span>
                                 {renderStatusBadge(res.status)}
                               </div>
-                              <div className="font-sans font-medium text-xs text-slate-500 flex items-center gap-2 tabular-nums">
+                              <div className="font-sans font-medium text-xs text-slate-500 flex items-center gap-2 tabular-nums flex-wrap">
                                 <span className="text-amber-700 font-bold">Mesa {res.tableId}</span>
                                 <span>•</span>
                                 <span>{res.time} ({res.durationMinutes}m)</span>
@@ -1115,57 +1113,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                               )}
                             </div>
 
-                            {/* Ações Rápidas */}
+                            {/* Ações Rápidas: Chegou (conclui logo), Cancelar e Editar */}
                             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                              {res.status === 'confirmada' && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    await updateOwnerReservation(res.id, { status: 'chegou' });
-                                    showToast('Chegada registada');
-                                    loadAll();
-                                  }}
-                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
-                                  title="Marcar Chegada"
-                                >
-                                  <UserCheck className="w-3.5 h-3.5" />
-                                  <span>Chegou</span>
-                                </button>
-                              )}
-
-                              {res.status === 'chegou' && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    await updateOwnerReservation(res.id, { status: 'sentada' });
-                                    showToast('Mesa sentada');
-                                    loadAll();
-                                  }}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
-                                  title="Sentar Mesa"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                  <span>Sentar</span>
-                                </button>
-                              )}
-
-                              {res.status === 'sentada' && (
+                              {/* 1. Botão Chegou - Conclui logo sem passos intermédios */}
+                              {res.status !== 'concluida' && res.status !== 'cancelada' && (
                                 <button
                                   type="button"
                                   onClick={async () => {
                                     await updateOwnerReservation(res.id, { status: 'concluida' });
-                                    showToast('Reserva finalizada');
+                                    showToast(`Chegada registada: reserva de ${res.customerName} concluída!`);
                                     loadAll();
                                   }}
-                                  className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer shadow-xs"
-                                  title="Concluir"
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                                  title="Marcar como Chegou (Fica logo concluída)"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Concluir</span>
+                                  <span>Chegou</span>
                                 </button>
                               )}
 
-                              {/* Editar */}
+                              {/* 2. Botão Cancelar caso o cliente ligue a cancelar */}
+                              {res.status !== 'cancelada' && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await updateOwnerReservation(res.id, { status: 'cancelada' });
+                                    showToast(`Reserva de ${res.customerName} cancelada`);
+                                    loadAll();
+                                  }}
+                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 border border-rose-300 hover:border-rose-400 font-sans font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                                  title="Cancelar reserva"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>Cancelar</span>
+                                </button>
+                              )}
+
+                              {/* 3. Botão Editar Reserva */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1177,34 +1162,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Email Gmail */}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenGmailConfirm(res)}
-                                className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 cursor-pointer shadow-xs"
-                                title="Enviar Confirmação por Gmail"
-                              >
-                                <Mail className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Cancelar com Confirmação */}
-                              {res.status !== 'cancelada' && res.status !== 'concluida' && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (confirm(`Tem a certeza que deseja cancelar a reserva de ${res.customerName}?`)) {
-                                      await updateOwnerReservation(res.id, { status: 'cancelada' });
-                                      showToast('Reserva cancelada');
-                                      loadAll();
-                                    }
-                                  }}
-                                  className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200 cursor-pointer shadow-xs"
-                                  title="Cancelar Reserva"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                </button>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -1213,7 +1170,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* ÁREA SECUNDÁRIA: Distribuição por Horário & Alertas */}
+                {/* ÁREA SECUNDÁRIA: Apenas Distribuição por Horário mantida */}
                 <div className="space-y-4">
                   {/* Distribuição por Turno */}
                   <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-4 shadow-xs">
@@ -1272,48 +1229,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                             style={{ width: `${Math.min(100, (shiftDistribution.dinner2.count / 12) * 100)}%` }}
                           />
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Estado da Ocupação do Restaurante */}
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 shadow-xs">
-                    <h3 className="font-sans font-bold text-base text-slate-900">
-                      Ocupação das Mesas (12 Total)
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2 text-xs font-sans">
-                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                        <span className="text-emerald-700 block text-[11px] font-semibold">Livres</span>
-                        <span className="font-bold text-lg text-emerald-800 tabular-nums">{daySummary.freeTables}</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
-                        <span className="text-rose-700 block text-[11px] font-semibold">Ocupadas</span>
-                        <span className="font-bold text-lg text-rose-800 tabular-nums">{daySummary.occupiedTables}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Alertas Importantes */}
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3 font-sans shadow-xs">
-                    <h3 className="font-sans font-bold text-base text-slate-900 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-500" />
-                      <span>Alertas da Operação</span>
-                    </h3>
-
-                    <div className="space-y-2 text-xs">
-                      {pendingReservationsCount > 0 && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
-                          Existem <strong>{pendingReservationsCount}</strong> reservas a aguardar confirmação ou chegada hoje.
-                        </div>
-                      )}
-                      {blockedPeriods.length > 0 && (
-                        <div className="p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl">
-                          Existem <strong>{blockedPeriods.length}</strong> períodos ou mesas bloqueadas configurados.
-                        </div>
-                      )}
-                      <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                        <span>Webhook n8n ativo em cada reserva online.</span>
                       </div>
                     </div>
                   </div>
@@ -1387,17 +1302,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Data:</span>
                   <button
                     type="button"
-                    onClick={() => setResDateFilter('todas')}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                      resDateFilter === 'todas'
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
-                    }`}
-                  >
-                    Todas
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setResDateFilter('hoje')}
                     className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       resDateFilter === 'hoje'
@@ -1429,6 +1333,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                   >
                     Esta Semana
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setResDateFilter('todas')}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      resDateFilter === 'todas'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
+                    }`}
+                  >
+                    Todas
+                  </button>
 
                   <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
 
@@ -1440,12 +1355,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-800 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="todas">Todos os Estados</option>
-                    <option value="confirmada">Confirmada</option>
                     <option value="chegou">Chegou</option>
-                    <option value="sentada">Sentada</option>
-                    <option value="concluida">Concluída</option>
                     <option value="cancelada">Cancelada</option>
-                    <option value="noshow">Falta de comparência (No-Show)</option>
+                    <option value="noshow">Falta de Comparência</option>
                   </select>
 
                   {/* Pax Filter */}
@@ -1511,87 +1423,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                             </div>
                           )}
 
-                          {/* Mobile Action Buttons */}
-                          <div className="flex items-center gap-1.5 pt-1 flex-wrap">
-                            {res.status === 'confirmada' && (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await updateOwnerReservation(res.id, { status: 'chegou' });
-                                  showToast('Chegada registada');
-                                  loadAll();
-                                }}
-                                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
-                              >
-                                <UserCheck className="w-3.5 h-3.5" />
-                                <span>Chegou</span>
-                              </button>
-                            )}
-
-                            {res.status === 'chegou' && (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await updateOwnerReservation(res.id, { status: 'sentada' });
-                                  showToast('Mesa sentada');
-                                  loadAll();
-                                }}
-                                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                <span>Sentar</span>
-                              </button>
-                            )}
-
-                            {res.status === 'sentada' && (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await updateOwnerReservation(res.id, { status: 'concluida' });
-                                  showToast('Reserva concluída');
-                                  loadAll();
-                                }}
-                                className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow-xs"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Concluir</span>
-                              </button>
-                            )}
-
+                          {/* Mobile Action Buttons: Apenas Editar */}
+                          <div className="flex items-center justify-end pt-1">
                             <button
                               type="button"
                               onClick={() => {
                                 setEditingReservation(res);
                                 setShowManualModal(true);
                               }}
-                              className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-700 font-sans font-bold text-xs rounded-xl border border-slate-200 cursor-pointer shadow-xs"
+                              className="py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-sans font-bold text-xs rounded-xl border border-slate-200 cursor-pointer shadow-xs flex items-center gap-1.5"
                             >
-                              Editar
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Editar</span>
                             </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleOpenGmailConfirm(res)}
-                              className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 font-sans font-bold text-xs rounded-xl border border-red-200 cursor-pointer shadow-xs"
-                            >
-                              Email
-                            </button>
-
-                            {res.status !== 'cancelada' && res.status !== 'concluida' && (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (confirm(`Deseja cancelar a reserva de ${res.customerName}?`)) {
-                                    await updateOwnerReservation(res.id, { status: 'cancelada' });
-                                    showToast('Reserva cancelada');
-                                    loadAll();
-                                  }
-                                }}
-                                className="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 cursor-pointer shadow-xs"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
                         </div>
                       ))
@@ -1648,86 +1492,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                                   {res.specialRequests.join(', ') || res.internalNotes || '—'}
                                 </td>
                                 <td className="px-4 py-3.5 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    {res.status === 'confirmada' && (
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          await updateOwnerReservation(res.id, { status: 'chegou' });
-                                          showToast('Chegada registada');
-                                          loadAll();
-                                        }}
-                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
-                                      >
-                                        Chegou
-                                      </button>
-                                    )}
-
-                                    {res.status === 'chegou' && (
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          await updateOwnerReservation(res.id, { status: 'sentada' });
-                                          showToast('Mesa sentada');
-                                          loadAll();
-                                        }}
-                                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
-                                      >
-                                        Sentar
-                                      </button>
-                                    )}
-
-                                    {res.status === 'sentada' && (
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          await updateOwnerReservation(res.id, { status: 'concluida' });
-                                          showToast('Mesa concluída');
-                                          loadAll();
-                                        }}
-                                        className="px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white font-sans font-bold text-xs rounded-lg cursor-pointer shadow-xs"
-                                      >
-                                        Concluir
-                                      </button>
-                                    )}
-
+                                  <div className="flex items-center justify-end">
                                     <button
                                       type="button"
                                       onClick={() => {
                                         setEditingReservation(res);
                                         setShowManualModal(true);
                                       }}
-                                      className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 border border-slate-200 cursor-pointer shadow-xs"
+                                      className="py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-sans font-bold text-xs rounded-xl border border-slate-200 cursor-pointer shadow-xs flex items-center gap-1.5"
                                       title="Editar Reserva"
                                     >
-                                      <Edit2 className="w-4 h-4" />
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                      <span>Editar</span>
                                     </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenGmailConfirm(res)}
-                                      className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 border border-red-200 cursor-pointer shadow-xs"
-                                      title="Enviar confirmação por Gmail"
-                                    >
-                                      <Mail className="w-4 h-4" />
-                                    </button>
-
-                                    {res.status !== 'cancelada' && (
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          if (confirm(`Deseja cancelar a reserva de ${res.customerName}?`)) {
-                                            await updateOwnerReservation(res.id, { status: 'cancelada' });
-                                            showToast('Reserva cancelada');
-                                            loadAll();
-                                          }
-                                        }}
-                                        className="p-1.5 hover:bg-rose-50 rounded-lg text-rose-600 border border-rose-200 cursor-pointer shadow-xs"
-                                        title="Cancelar reserva"
-                                      >
-                                        <XCircle className="w-4 h-4" />
-                                      </button>
-                                    )}
                                   </div>
                                 </td>
                               </tr>
@@ -1911,112 +1688,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
           )}
 
           {/* ======================================================================= */}
-          {/* SECÇÃO: CLIENTES                                                        */}
-          {/* ======================================================================= */}
-          {activeSection === 'clientes' && (
-            <div className="space-y-4 font-sans">
-              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar por nome, telemóvel ou email..."
-                    value={customerSearchQuery}
-                    onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                  />
-                </div>
-
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Total: {filteredCustomers.length} Clientes Registados
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredCustomers.length === 0 ? (
-                  <div className="col-span-full py-12 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">
-                    Nenhum cliente encontrado.
-                  </div>
-                ) : (
-                  filteredCustomers.map((cust) => {
-                    const custRes = reservations.filter(
-                      (r) => r.customerPhone === cust.phone || r.customerName === cust.name
-                    );
-
-                    return (
-                      <div
-                        key={cust.id}
-                        className="p-5 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-xs flex flex-col justify-between"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-sans font-bold text-base text-slate-900 truncate">
-                              {cust.name}
-                            </span>
-                            <span className="font-sans font-bold text-xs uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 tabular-nums">
-                              {cust.visitsCount} {cust.visitsCount === 1 ? 'visita' : 'visitas'}
-                            </span>
-                          </div>
-
-                          <div className="text-xs text-slate-600 space-y-0.5 tabular-nums">
-                            <div>📞 {cust.phone}</div>
-                            {cust.email && <div className="truncate">✉️ {cust.email}</div>}
-                            {cust.lastVisit && <div>📅 Última visita: {cust.lastVisit}</div>}
-                          </div>
-
-                          {cust.allergies && cust.allergies.length > 0 && (
-                            <div className="text-xs text-amber-900 bg-amber-50 border border-amber-200/60 p-2 rounded-lg">
-                              <strong>Alergias / Pedidos:</strong> {cust.allergies.join(', ')}
-                            </div>
-                          )}
-
-                          {cust.internalNotes && (
-                            <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 p-2 rounded-lg italic">
-                              "{cust.internalNotes}"
-                            </div>
-                          )}
-
-                          {/* Mini History */}
-                          <div className="pt-2 text-xs text-slate-500">
-                            <strong className="text-slate-700">Histórico ({custRes.length}):</strong>
-                            <div className="mt-1 space-y-1">
-                              {custRes.slice(0, 3).map((r) => (
-                                <div key={r.id} className="text-[11px] text-slate-600 flex justify-between">
-                                  <span>{r.date} às {r.time}</span>
-                                  <span className="capitalize text-slate-800 font-medium">{r.status}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* RGPD Compliance Action */}
-                        <div className="pt-3 border-t border-slate-100 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (confirm(`Tem a certeza que deseja anonimizar e apagar todos os dados de ${cust.name}? Esta ação cumpre o RGPD e é irreversível.`)) {
-                                await gdprDeleteOwnerCustomer(cust.phone);
-                                showToast('Dados anonimizados e apagados com sucesso');
-                                loadAll();
-                              }
-                            }}
-                            className="text-xs text-slate-400 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
-                            title="Direito ao Esquecimento RGPD"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Eliminar RGPD</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================================= */}
           {/* SECÇÃO: ESTATÍSTICAS E RELATÓRIOS                                       */}
           {/* ======================================================================= */}
           {activeSection === 'estatisticas' && (
@@ -2060,8 +1731,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* 6 Key Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* 5 Key Stats Cards (sem retenção de clientes) */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Reservas</span>
                   <div className="font-bold text-2xl text-slate-900 tabular-nums">{statsData.total}</div>
@@ -2083,129 +1754,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 </div>
 
                 <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">No-Show</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Falta de Comparência</span>
                   <div className="font-bold text-2xl text-purple-700 tabular-nums">{statsData.noShowRate}%</div>
                 </div>
-
-                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Recorrentes</span>
-                  <div className="font-bold text-2xl text-amber-700 tabular-nums">{statsData.recurringRate}%</div>
-                </div>
-              </div>
-
-              {/* Graphical Analysis */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-5 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
-                  <h4 className="font-bold text-sm text-slate-900">Distribuição por Serviço</h4>
-                  <div className="space-y-3 text-xs">
-                    <div>
-                      <div className="flex justify-between mb-1 text-slate-600 font-medium">
-                        <span>Almoço (12:30 e 14:00)</span>
-                        <span className="font-bold tabular-nums text-slate-900">{statsData.lunchCount} reservas</span>
-                      </div>
-                      <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full bg-amber-500 rounded-full"
-                          style={{
-                            width: statsData.total ? `${(statsData.lunchCount / statsData.total) * 100}%` : '0%'
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between mb-1 text-slate-600 font-medium">
-                        <span>Jantar (19:30 e 21:00)</span>
-                        <span className="font-bold tabular-nums text-slate-900">{statsData.dinnerCount} reservas</span>
-                      </div>
-                      <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full bg-sky-500 rounded-full"
-                          style={{
-                            width: statsData.total ? `${(statsData.dinnerCount / statsData.total) * 100}%` : '0%'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
-                  <h4 className="font-bold text-sm text-slate-900">Retenção de Clientes</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>{statsData.recurringRate}%</strong> dos clientes registados já visitaram o Qué Pasa mais de uma vez.
-                  </p>
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                    Acompanhamento de preferências alimentares e notas internas registadas para proporcionar um atendimento personalizado.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================================= */}
-          {/* SECÇÃO: NOTIFICAÇÕES                                                    */}
-          {/* ======================================================================= */}
-          {activeSection === 'notificacoes' && (
-            <div className="space-y-4 font-sans">
-              <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs">
-                <div>
-                  <h3 className="font-sans font-bold text-lg text-slate-900">Central de Notificações</h3>
-                  <p className="font-sans font-normal text-xs text-slate-500">
-                    Alertas em tempo real sobre novas reservas, alterações de estado e mensagens.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!pushEnabled && (
-                    <button
-                      type="button"
-                      onClick={handleRequestPush}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-amber-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
-                    >
-                      <Bell className="w-3.5 h-3.5" />
-                      <span>Ativar no Telemóvel</span>
-                    </button>
-                  )}
-                  {unreadNotificationsCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => markOwnerNotificationsRead()}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 cursor-pointer shadow-xs transition-colors"
-                    >
-                      Marcar Todas como Lidas
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-xs">
-                {notifications.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 text-sm">
-                    Sem notificações no histórico.
-                  </div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-4 flex items-start justify-between gap-3 transition-colors ${
-                        !n.isRead ? 'bg-amber-50/60' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900">{n.title}</span>
-                          {!n.isRead && (
-                            <span className="w-2 h-2 rounded-full bg-amber-500" />
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">{n.message}</p>
-                        <span className="text-[11px] text-slate-400 tabular-nums">
-                          {new Date(n.createdAt).toLocaleString('pt-PT')}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
             </div>
           )}
@@ -2356,32 +1907,99 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* Restaurant Details Form */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
-                <h4 className="font-bold text-base text-slate-900">Dados Oficiais do Restaurante</h4>
+              {/* Formulário Completo de Configurações para Admin */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 space-y-5 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900">Identificação e Contactos Oficiais</h4>
+                    <p className="text-xs text-slate-500">Dados do restaurante apresentados aos clientes e na confirmação de reservas.</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isSavingSettings}
+                    onClick={async () => {
+                      setIsSavingSettings(true);
+                      try {
+                        await saveOwnerSettings(settings);
+                        showToast('Todas as configurações guardadas com sucesso!');
+                        const data = await fetchOwnerAllData();
+                        setSettings(data.settings);
+                      } catch (err: any) {
+                        showToast(err.message || 'Erro ao guardar configurações');
+                      } finally {
+                        setIsSavingSettings(false);
+                      }
+                    }}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 active:scale-95 text-slate-950 font-bold text-xs rounded-xl cursor-pointer shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-auto"
+                  >
+                    <CheckCircle2 className={`w-4 h-4 ${isSavingSettings ? 'animate-spin' : ''}`} />
+                    <span>{isSavingSettings ? 'A guardar...' : 'Guardar Alterações'}</span>
+                  </button>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                      Telefone Oficial
+                      Nome do Restaurante
                     </label>
                     <input
                       type="text"
-                      value={settings.phone || '234 424 208'}
-                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      value={settings.restaurantName ?? ''}
+                      placeholder="Qué Pasa"
+                      onChange={(e) => setSettings({ ...settings, restaurantName: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                      Email de Contacto
+                      Slogan / Descrição
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.tagline ?? ''}
+                      placeholder="Cozinha de Autor & Petiscos"
+                      onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Telefone Oficial de Contacto
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.phone ?? ''}
+                      placeholder="234 424 208"
+                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Email de Contacto Público
                     </label>
                     <input
                       type="email"
-                      value={settings.email || 'dono@barbaazul.pt'}
+                      value={settings.email ?? ''}
+                      placeholder="reservas@quepasa.pt"
                       onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Email de Notificações do Administrador
+                    </label>
+                    <input
+                      type="email"
+                      value={settings.ownerEmail ?? ''}
+                      placeholder="dono@quepasa.pt"
+                      onChange={(e) => setSettings({ ...settings, ownerEmail: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
@@ -2391,9 +2009,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     </label>
                     <input
                       type="text"
-                      value={settings.address || 'Cais dos Mercantéis 14'}
+                      value={settings.address ?? ''}
+                      placeholder="Cais dos Mercantéis 14"
                       onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Código Postal
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.postalCode ?? ''}
+                      placeholder="3800-228"
+                      onChange={(e) => setSettings({ ...settings, postalCode: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 
@@ -2403,41 +2035,205 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
                     </label>
                     <input
                       type="text"
-                      value={settings.city || 'Aveiro'}
+                      value={settings.city ?? ''}
+                      placeholder="Aveiro"
                       onChange={(e) => setSettings({ ...settings, city: e.target.value })}
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Políticas e Regras de Reservas */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 space-y-5 shadow-xs">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">Políticas e Regras de Reserva</h4>
+                  <p className="text-xs text-slate-500">Configuração de prazos, tolerâncias e intervalos operacionais.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Tolerância de Chegada (minutos)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="120"
+                      value={settings.noShowGraceMinutes ?? 15}
+                      onChange={(e) => setSettings({ ...settings, noShowGraceMinutes: parseInt(e.target.value) || 0 })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-0.5 block">Tempo de tolerância antes de mesa vaga</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Intervalo de Limpeza (minutos)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="60"
+                      value={settings.cleaningBufferMinutes ?? 15}
+                      onChange={(e) => setSettings({ ...settings, cleaningBufferMinutes: parseInt(e.target.value) || 0 })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-0.5 block">Buffer entre turnos consecutivos</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Antecedência Mínima (horas)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="48"
+                      value={settings.minAdvanceHours ?? 1}
+                      onChange={(e) => setSettings({ ...settings, minAdvanceHours: parseInt(e.target.value) || 0 })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-0.5 block">Horas mínimas antes do serviço</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Antecedência Máxima (dias)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={settings.maxAdvanceDays ?? 30}
+                      onChange={(e) => setSettings({ ...settings, maxAdvanceDays: parseInt(e.target.value) || 1 })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-0.5 block">Dias no futuro abertos para reserva</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modelos de Mensagens e Notificações por Email */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 space-y-5 shadow-xs">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">Modelos de Mensagens e Emails</h4>
+                  <p className="text-xs text-slate-500">Personalize o assunto e as mensagens automáticas de confirmação e cancelamento enviadas aos clientes e sincronizadas com o n8n.</p>
+                </div>
+
+                <div className="space-y-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        Assunto: Confirmação de Reserva
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.emailTemplates?.confirmationSubject ?? ''}
+                        placeholder="Confirmação da sua Reserva - Qué Pasa"
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            emailTemplates: {
+                              ...(settings.emailTemplates || {}),
+                              confirmationSubject: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        Assunto: Cancelamento de Reserva
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.emailTemplates?.cancellationSubject ?? ''}
+                        placeholder="Reserva Cancelada · Qué Pasa"
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            emailTemplates: {
+                              ...(settings.emailTemplates || {}),
+                              cancellationSubject: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Texto do Email de Confirmação
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={settings.emailTemplates?.confirmationBody ?? ''}
+                      placeholder="Texto do email de confirmação..."
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          emailTemplates: {
+                            ...(settings.emailTemplates || {}),
+                            confirmationBody: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      Texto do Email de Cancelamento
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={settings.emailTemplates?.cancellationBody ?? ''}
+                      placeholder="Texto do email de cancelamento..."
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          emailTemplates: {
+                            ...(settings.emailTemplates || {}),
+                            cancellationBody: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-sans text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between flex-wrap gap-3">
+                  <span className="text-xs text-slate-500 italic">
+                    Como administrador, todas as alterações guardadas aplicam-se imediatamente a todo o sistema e webhooks.
+                  </span>
                   <button
                     type="button"
+                    disabled={isSavingSettings}
                     onClick={async () => {
-                      await saveOwnerSettings(settings);
-                      showToast('Configurações guardadas com sucesso');
+                      setIsSavingSettings(true);
+                      try {
+                        await saveOwnerSettings(settings);
+                        showToast('Todas as configurações guardadas com sucesso!');
+                        const data = await fetchOwnerAllData();
+                        setSettings(data.settings);
+                      } catch (err: any) {
+                        showToast(err.message || 'Erro ao guardar configurações');
+                      } finally {
+                        setIsSavingSettings(false);
+                      }
                     }}
-                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl cursor-pointer shadow-xs transition-colors"
+                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 active:scale-95 text-slate-950 font-bold text-sm rounded-xl cursor-pointer shadow-xs transition-all flex items-center gap-2"
                   >
-                    Guardar Informações
+                    <CheckCircle2 className={`w-4 h-4 ${isSavingSettings ? 'animate-spin' : ''}`} />
+                    <span>{isSavingSettings ? 'A guardar...' : 'Guardar Todas as Configurações'}</span>
                   </button>
-                </div>
-              </div>
-
-              {/* Horários e Turnos Fixos */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
-                <h4 className="font-bold text-base text-slate-900">Horários e Turnos Operacionais</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                    <strong className="text-amber-700 font-bold text-sm block">Almoço</strong>
-                    <p className="text-slate-700">Turno 1: 12:30 | Turno 2: 14:00</p>
-                    <span className="text-[11px] text-slate-500">Duração estimada: 90 minutos</span>
-                  </div>
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                    <strong className="text-sky-700 font-bold text-sm block">Jantar</strong>
-                    <p className="text-slate-700">Turno 1: 19:30 | Turno 2: 21:00</p>
-                    <span className="text-[11px] text-slate-500">Duração estimada: 90 minutos</span>
-                  </div>
                 </div>
               </div>
             </div>
