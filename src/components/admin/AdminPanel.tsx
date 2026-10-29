@@ -67,7 +67,7 @@ import {
   saveOwnerSettings,
   ownerLogout
 } from '../../services/api.ts';
-import { INITIAL_TABLES, getTodayStr, exportReservationsToCsv } from '../../services/storage.ts';
+import { INITIAL_TABLES, INITIAL_SETTINGS, getSettings, getReservations, getTodayStr, exportReservationsToCsv } from '../../services/storage.ts';
 import { FloorPlanSVG } from '../FloorPlanSVG.tsx';
 import { ManualReservationModal } from './ManualReservationModal.tsx';
 import { TableDetailModal } from './TableDetailModal.tsx';
@@ -101,9 +101,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
 
   // Core Data States
   const [tables, setTables] = useState<RestaurantTable[]>(INITIAL_TABLES);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>(() => getReservations());
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
-  const [settings, setSettings] = useState<RestaurantSettings | null>(null);
+  const [settings, setSettings] = useState<RestaurantSettings | null>(() => getSettings() || INITIAL_SETTINGS);
   const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([]);
   const [notifications, setNotifications] = useState<OwnerNotification[]>([]);
 
@@ -198,7 +198,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onLogout }) => {
   const handleSyncSupabase = async () => {
     setIsSyncingSupabase(true);
     try {
-      const res = await bulkSyncAllToSupabase(reservations, customers);
+      const res = await bulkSyncAllToSupabase(reservations, customers, settings);
       showToast(res.message);
     } catch (err: any) {
       showToast(err.message || 'Falha ao sincronizar com Supabase.');

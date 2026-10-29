@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Reservation, CustomerProfile, RestaurantTable } from '../types/index.ts';
+import { Reservation, CustomerProfile, RestaurantTable, RestaurantSettings } from '../types/index.ts';
+import { INITIAL_SETTINGS, getSettings } from './storage.ts';
 
 // Default provided Supabase credentials (can also be overridden via Vite env vars)
 export const DEFAULT_SUPABASE_URL = 'https://vuyzzmjjbedkuqxjzayr.supabase.co';
@@ -260,7 +261,8 @@ export async function syncCustomerToSupabase(customer: CustomerProfile): Promise
 // Bulk sync all local reservations and customers to Supabase
 export async function bulkSyncAllToSupabase(
   reservations: Reservation[],
-  customers: CustomerProfile[]
+  customers: CustomerProfile[],
+  settings?: RestaurantSettings | null
 ): Promise<{ success: boolean; syncedReservations: number; syncedCustomers: number; message: string }> {
   let syncedReservations = 0;
   let syncedCustomers = 0;
@@ -295,6 +297,10 @@ export async function bulkSyncAllToSupabase(
       }
     }
 
+    if (settings) {
+      await syncSettingsToSupabase(settings);
+    }
+
     return {
       success: true,
       syncedReservations,
@@ -308,5 +314,221 @@ export async function bulkSyncAllToSupabase(
       syncedCustomers,
       message: err?.message || 'Falha ao sincronizar com o Supabase.',
     };
+  }
+}
+
+// Fetch all reservations from Supabase
+export async function fetchReservationsFromSupabase(): Promise<Reservation[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error || !Array.isArray(data)) return null;
+    return data.map(fromSupabaseReservationRow);
+  } catch {
+    return null;
+  }
+}
+
+// Delete reservation from Supabase
+export async function deleteReservationFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('reservations').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+// Fetch all customers from Supabase
+export async function fetchCustomersFromSupabase(): Promise<CustomerProfile[] | null> {
+  try {
+    const { data, error } = await supabase.from('customers').select('*');
+    if (error || !Array.isArray(data)) return null;
+    return data.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      email: row.email || '',
+      isVip: Boolean(row.is_vip),
+      visitsCount: row.visits_count || 1,
+      noShowCount: row.no_show_count || 0,
+      allergies: Array.isArray(row.allergies) ? row.allergies : [],
+      internalNotes: row.internal_notes || '',
+      lastVisit: row.last_visit || '',
+      gdprConsentDate: row.created_at || new Date().toISOString(),
+    }));
+  } catch {
+    return null;
+  }
+}
+
+// Fetch tables from Supabase
+export async function fetchTablesFromSupabase(): Promise<RestaurantTable[] | null> {
+  try {
+    const { data, error } = await supabase.from('tables').select('*').order('id', { ascending: true });
+    if (error || !Array.isArray(data) || data.length === 0) return null;
+    return data.map((row: any) => ({
+      id: row.id,
+      number: row.number,
+      capacity: row.capacity,
+      x: row.x,
+      y: row.y,
+      radius: row.radius || 48,
+      isActive: row.is_active !== false,
+      section: row.section || 'sala',
+      joinedWithId: row.joined_with_id || undefined,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+// Sync tables to Supabase
+export async function syncTablesToSupabase(tables: RestaurantTable[]): Promise<boolean> {
+  try {
+    const rows = tables.map((t) => ({
+      id: t.id,
+      number: t.number,
+      capacity: t.capacity,
+      x: t.x,
+      y: t.y,
+      radius: t.radius || 48,
+      is_active: t.isActive !== false,
+      section: t.section || 'sala',
+      joined_with_id: t.joinedWithId ?? null,
+    }));
+    const { error } = await supabase.from('tables').upsert(rows, { onConflict: 'id' });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+// Fetch settings from Supabase
+export async function fetchSettingsFromSupabase(): Promise<RestaurantSettings | null> {
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('data')
+      .eq('id', 'current')
+      .maybeSingle();
+    if (error || !data || !data.data) return null;
+    return {
+      ...INITIAL_SETTINGS,
+      ...data.data,
+      emailTemplates: {
+        ...INITIAL_SETTINGS.emailTemplates,
+        ...(data.data.emailTemplates || {}),
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Sync settings to Supabase
+export async function syncSettingsToSupabase(settings: RestaurantSettings): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('settings').upsert(
+      {
+        id: 'current',
+        data: settings,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+// Helper to dispatch n8n webhook directly when running in serverless/fallback mode
+const N8N_WEBHOOK_URL = 'https://simaoramos.app.n8n.cloud/webhook/nova-reserva';
+
+export async function sendClientN8nWebhook(
+  reservation: Reservation,
+  eventType: 'nova_reserva' | 'cancelamento_reserva' = 'nova_reserva'
+): Promise<void> {
+  try {
+    const remoteSettings = await fetchSettingsFromSupabase();
+    const settings = remoteSettings || getSettings() || INITIAL_SETTINGS;
+    const restName = settings.restaurantName || 'Qué Pasa';
+    const templates = settings.emailTemplates || {};
+
+    const defaultConfirmationSubject = `Confirmação da sua Reserva - ${restName}`;
+    const defaultConfirmationBody = `Caro(a) {NOME},\n\nA sua mesa para {PESSOAS} pessoas está 100% confirmada para {DATA} às {HORA} (Mesa {MESA}).\n\nA sua reserva está totalmente garantida — não é necessário qualquer código de confirmação nem validação adicional.\n\nLocalização: Cais dos Mercantéis, nº 14, Aveiro.\nTolerância de chegada: 20 minutos (Contacto para atrasos: 234 424 208).\n\nAté breve,\nEquipa ${restName}`;
+
+    const defaultCancellationSubject = `Reserva Cancelada · ${restName}`;
+    const defaultCancellationBody = `Olá {NOME},\n\nA sua reserva no ${restName} para {PESSOAS} pessoas no dia {DATA} às {HORA} (Mesa {MESA}, Código {CODIGO}) foi cancelada.\n\nEsperamos ter a oportunidade de o receber numa próxima ocasião.\n\nCom os melhores cumprimentos,\nA equipa do ${restName}`;
+
+    const emailTemplates = {
+      confirmationSubject: (templates.confirmationSubject || defaultConfirmationSubject).trim(),
+      confirmationBody: (templates.confirmationBody || defaultConfirmationBody).trim(),
+      cancellationSubject: (templates.cancellationSubject || defaultCancellationSubject).trim(),
+      cancellationBody: (templates.cancellationBody || defaultCancellationBody).trim(),
+    };
+
+    const replacePlaceholders = (text: string) =>
+      text
+        .replace(/{CODIGO}/g, reservation.code)
+        .replace(/{NOME}/g, reservation.customerName)
+        .replace(/{DATA}/g, reservation.date)
+        .replace(/{HORA}/g, reservation.time)
+        .replace(/{MESA}/g, String(reservation.tableId))
+        .replace(/{PESSOAS}/g, String(reservation.guests));
+
+    const isCancellation = eventType === 'cancelamento_reserva';
+    const activeSubject = replacePlaceholders(
+      isCancellation ? emailTemplates.cancellationSubject : emailTemplates.confirmationSubject
+    );
+    const activeBody = replacePlaceholders(
+      isCancellation ? emailTemplates.cancellationBody : emailTemplates.confirmationBody
+    );
+
+    const payload = {
+      event: eventType,
+      evento: eventType,
+      timestamp: new Date().toISOString(),
+      assunto_email: activeSubject,
+      corpo_email: activeBody,
+      email_subject: activeSubject,
+      email_body: activeBody,
+      emailTemplates,
+      id: reservation.id,
+      codigo: reservation.code,
+      cliente: reservation.customerName,
+      nome: reservation.customerName,
+      telemovel: reservation.customerPhone,
+      telefone: reservation.customerPhone,
+      email: reservation.customerEmail,
+      data: reservation.date,
+      hora: reservation.time,
+      pessoas: reservation.guests,
+      pax: reservation.guests,
+      mesa: reservation.tableId,
+      pedidos_especiais: (reservation.specialRequests || []).join(', '),
+      observacoes: reservation.notes || '',
+      notas: reservation.notes || '',
+      notas_internas: reservation.internalNotes || '',
+      origem: reservation.source || 'online',
+      estado: isCancellation ? 'cancelada' : reservation.status,
+      duracao_minutos: reservation.durationMinutes,
+      criado_em: reservation.createdAt,
+      reservation: {
+        ...reservation,
+        status: isCancellation ? 'cancelada' : reservation.status,
+      },
+    };
+
+    await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.warn('[N8N FALLBACK NOTICE]', err);
   }
 }

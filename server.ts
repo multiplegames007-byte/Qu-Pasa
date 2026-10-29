@@ -30,7 +30,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_FILE = path.join(__dirname, 'data', 'restaurant_db.json');
+const SEED_DB_FILE = path.join(__dirname, 'data', 'restaurant_db.json');
+const DB_FILE = process.env.VERCEL
+  ? path.join('/tmp', 'restaurant_db.json')
+  : SEED_DB_FILE;
 
 app.use(express.json());
 
@@ -300,6 +303,11 @@ function loadDb(): DatabaseSchema {
       db = JSON.parse(raw);
       return db;
     }
+    if (SEED_DB_FILE !== DB_FILE && fs.existsSync(SEED_DB_FILE)) {
+      const raw = fs.readFileSync(SEED_DB_FILE, 'utf-8');
+      db = JSON.parse(raw);
+      return db;
+    }
   } catch (err) {
     console.warn('Could not read db file, creating new:', err);
   }
@@ -421,6 +429,88 @@ async function syncReservationToSupabaseServer(res: Reservation) {
   } catch (err: any) {
     console.warn('[SUPABASE SERVER SYNC EXCEPTION]', err?.message);
   }
+}
+
+async function syncSettingsToSupabaseServer(settings: RestaurantSettings) {
+  try {
+    await supabaseServer.from('settings').upsert(
+      {
+        id: 'current',
+        data: settings,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+  } catch (err: any) {
+    console.warn('[SUPABASE SETTINGS SYNC EXCEPTION]', err?.message);
+  }
+}
+
+async function fetchSettingsFromSupabaseServer(): Promise<RestaurantSettings | null> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('settings')
+      .select('data')
+      .eq('id', 'current')
+      .maybeSingle();
+    if (error || !data || !data.data) return null;
+    return data.data as RestaurantSettings;
+  } catch {
+    return null;
+  }
+}
+
+async function hydrateStateFromSupabaseServer(state: DatabaseSchema): Promise<DatabaseSchema> {
+  try {
+    const [resQuery, setQuery] = await Promise.all([
+      supabaseServer.from('reservations').select('*').order('created_at', { ascending: false }),
+      supabaseServer.from('settings').select('data').eq('id', 'current').maybeSingle(),
+    ]);
+
+    if (!resQuery.error && Array.isArray(resQuery.data) && resQuery.data.length > 0) {
+      const supaReservations: Reservation[] = resQuery.data.map((row: any) => ({
+        id: row.id,
+        code: row.code,
+        date: row.date,
+        time: row.time,
+        guests: row.guests,
+        tableId: row.table_id,
+        customerName: row.customer_name,
+        customerPhone: row.customer_phone,
+        customerEmail: row.customer_email || '',
+        specialRequests: Array.isArray(row.special_requests) ? row.special_requests : [],
+        notes: row.notes || '',
+        internalNotes: row.internal_notes || '',
+        status: row.status,
+        durationMinutes: row.duration_minutes || 90,
+        source: row.source || 'online',
+        createdAt: row.created_at || new Date().toISOString(),
+      }));
+
+      const byId = new Map<string, Reservation>();
+      for (const r of supaReservations) {
+        if (r?.id) byId.set(r.id, r);
+      }
+      for (const r of state.reservations) {
+        if (r?.id && !byId.has(r.id)) byId.set(r.id, r);
+      }
+      state.reservations = Array.from(byId.values());
+    }
+
+    if (!setQuery.error && setQuery.data?.data) {
+      state.settings = {
+        ...state.settings,
+        ...setQuery.data.data,
+        emailTemplates: {
+          ...(state.settings.emailTemplates || {}),
+          ...(setQuery.data.data.emailTemplates || {}),
+        },
+      };
+    }
+  } catch (err: any) {
+    console.warn('[SUPABASE HYDRATE WARN]', err?.message);
+  }
+  return state;
 }
 
 // Brevo (Sendinblue) Integration Helpers
@@ -908,9 +998,17 @@ async function sendReservationWebhook(
   try {
     console.log(`[N8N WEBHOOK] A disparar pedido POST para ${N8N_RESERVATION_WEBHOOK_URL} (Evento: ${eventType}, Reserva: ${reservation.code || reservation.id})...`);
 
-    // 1. Obter a configuração persistida mais recente a partir do armazenamento do servidor
+    // 1. Obter a configuração persistida mais recente (Supabase + armazenamento do servidor)
     const freshDb = loadDb();
-    const settings = freshDb?.settings || ({} as RestaurantSettings);
+    const supaSettings = await fetchSettingsFromSupabaseServer();
+    const settings: RestaurantSettings = {
+      ...(freshDb?.settings || ({} as RestaurantSettings)),
+      ...(supaSettings || {}),
+      emailTemplates: {
+        ...(freshDb?.settings?.emailTemplates || {}),
+        ...(supaSettings?.emailTemplates || {}),
+      },
+    };
     const restName = settings.restaurantName || 'Qué Pasa';
     const templates = settings.emailTemplates || {};
 
@@ -1459,9 +1557,9 @@ app.post('/api/admin/logout', requireOwnerAuth, (req: Request, res: Response) =>
 });
 
 // Dashboard Day Summary (Today KPIs)
-app.get('/api/admin/dashboard-summary', requireOwnerAuth, (req: Request, res: Response) => {
+app.get('/api/admin/dashboard-summary', requireOwnerAuth, async (req: Request, res: Response) => {
   const date = (req.query.date as string) || getTodayStr();
-  const state = loadDb();
+  const state = await hydrateStateFromSupabaseServer(loadDb());
 
   const dayReservations = state.reservations.filter((r) => r.date === date && r.status !== 'cancelada');
   const expectedGuests = dayReservations.reduce((acc, r) => acc + r.guests, 0);
@@ -1497,8 +1595,8 @@ app.get('/api/admin/dashboard-summary', requireOwnerAuth, (req: Request, res: Re
 });
 
 // Full Management Data Fetch
-app.get('/api/admin/data', requireOwnerAuth, (req: Request, res: Response) => {
-  const state = loadDb();
+app.get('/api/admin/data', requireOwnerAuth, async (req: Request, res: Response) => {
+  const state = await hydrateStateFromSupabaseServer(loadDb());
   res.json({
     tables: state.tables,
     reservations: state.reservations,
@@ -1862,10 +1960,11 @@ app.post('/api/admin/customers/:id/gdpr-delete', requireOwnerAuth, (req: Request
 });
 
 // Save Settings
-app.post('/api/admin/settings', requireOwnerAuth, (req: Request, res: Response) => {
+app.post('/api/admin/settings', requireOwnerAuth, async (req: Request, res: Response) => {
   const state = loadDb();
   state.settings = { ...state.settings, ...req.body };
   saveDb(state);
+  await syncSettingsToSupabaseServer(state.settings);
   res.json(state.settings);
 });
 
@@ -2049,4 +2148,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
