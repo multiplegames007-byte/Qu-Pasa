@@ -531,7 +531,10 @@ export async function sendClientN8nWebhook(
   eventType: 'nova_reserva' | 'cancelamento_reserva' = 'nova_reserva'
 ): Promise<void> {
   try {
-    const remoteSettings = await fetchSettingsFromSupabase();
+    const remoteSettings = await Promise.race([
+      fetchSettingsFromSupabase(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200)),
+    ]);
     const settings = remoteSettings || getSettings() || INITIAL_SETTINGS;
     const restName = settings.restaurantName || 'Qué Pasa';
     const templates = settings.emailTemplates || {};

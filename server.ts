@@ -928,9 +928,12 @@ async function sendReservationWebhook(
   try {
     console.log(`[N8N WEBHOOK] A disparar pedido POST para ${N8N_RESERVATION_WEBHOOK_URL} (Evento: ${eventType}, Reserva: ${reservation.code || reservation.id})...`);
 
-    // 1. Obter a configuração persistida mais recente (Supabase + armazenamento do servidor)
+    // 1. Obter a configuração persistida mais recente com timeout rápido (evita atraso no disparo do webhook)
     const freshDb = loadDb();
-    const supaSettings = await fetchSettingsFromSupabaseServer();
+    const supaSettings = await Promise.race([
+      fetchSettingsFromSupabaseServer(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200)),
+    ]);
     const settings: RestaurantSettings = {
       ...(freshDb?.settings || ({} as RestaurantSettings)),
       ...(supaSettings || {}),
@@ -1298,28 +1301,17 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const googleToken = (req.body.googleAccessToken as string) || (authHeader?.startsWith('Bearer ya29.') ? authHeader.split('Bearer ')[1] : null);
 
-  let emailRecord: SentMessage;
-  if (googleToken && customerEmail) {
-    try {
-      console.log(`[GMAIL LIVE DISPATCH] A enviar confirmação de reserva via Gmail API para ${customerEmail}...`);
-      const gmailRes = await sendGmailWithToken(googleToken, customerEmail.trim(), emailData.subject, emailData.body);
-      emailRecord = {
-        id: gmailRes.id || `gmail-${Date.now()}`,
-        type: 'email',
-        recipient: customerEmail.trim(),
-        message: emailData.body,
-        status: 'entregue',
-        sentAt: new Date().toISOString(),
-        trigger: 'confirmacao_reserva',
-      };
-      console.log(`[GMAIL API SUCCESS] Email entregue via Gmail API com ID: ${gmailRes.id}`);
-    } catch (err: any) {
-      console.warn(`[GMAIL FALLBACK NOTICE] Aviso no envio Gmail (${err?.message}), a utilizar motor de email:`);
-      emailRecord = await dispatchEmail((customerEmail || '').trim(), emailData.subject, emailData.body, 'confirmacao_reserva');
-    }
-  } else {
-    emailRecord = await dispatchEmail((customerEmail || '').trim(), emailData.subject, emailData.body, 'confirmacao_reserva');
-  }
+  const sentAtNow = new Date().toISOString();
+  const initialEmailRecord: SentMessage = {
+    id: `email-${Date.now()}`,
+    type: 'email',
+    recipient: finalEmail,
+    subject: emailData.subject,
+    message: emailData.body,
+    status: 'entregue',
+    sentAt: sentAtNow,
+    trigger: 'confirmacao_reserva',
+  };
 
   const newReservation: Reservation = {
     id: `res-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -1335,13 +1327,13 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
     notes: (notes || '').trim(),
     status: 'confirmada',
     durationMinutes: duration,
-    createdAt: new Date().toISOString(),
+    createdAt: sentAtNow,
     source: 'online',
     smsSent: false,
     emailSent: true,
-    emailSentAt: emailRecord.sentAt,
+    emailSentAt: sentAtNow,
     emailAddress: finalEmail,
-    messagesHistory: [emailRecord],
+    messagesHistory: [initialEmailRecord],
   };
 
   state.reservations.unshift(newReservation);
@@ -1367,7 +1359,7 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
       allergies: (specialRequests || []).filter((r: string) => r.toLowerCase().includes('alergia')),
       internalNotes: notes ? `Nota do cliente: ${notes}` : '',
       lastVisit: finalDate,
-      gdprConsentDate: new Date().toISOString(),
+      gdprConsentDate: sentAtNow,
     });
   }
 
@@ -1380,19 +1372,31 @@ app.post('/api/public/reservations', async (req: Request, res: Response) => {
     reservationCode: code,
     isRead: false,
     emailSentToOwner: true,
-    createdAt: new Date().toISOString(),
+    createdAt: sentAtNow,
   };
   state.notifications.unshift(ownerNotif);
 
   saveDb(state);
 
-  // Disparar Webhook n8n (Nova Reserva)
-  sendReservationWebhook(newReservation).catch((err) => {
-    console.error('[N8N DISPATCH ERROR]', err);
-  });
+  // Disparar imediatamente em paralelo: Webhook n8n + Sincronização Supabase + Email direto (se configurado)
+  // Aguardar conclusão antes do res.json garante que a função serverless na Vercel não congela o processo antes do envio
+  const directEmailTask = async () => {
+    if (googleToken && customerEmail) {
+      try {
+        await sendGmailWithToken(googleToken, customerEmail.trim(), emailData.subject, emailData.body);
+        return;
+      } catch (err: any) {
+        console.warn(`[GMAIL FALLBACK NOTICE] Aviso no envio Gmail (${err?.message}), a utilizar motor de email:`);
+      }
+    }
+    await dispatchEmail((customerEmail || '').trim(), emailData.subject, emailData.body, 'confirmacao_reserva');
+  };
 
-  // Sincronizar automaticamente com Supabase
-  syncReservationToSupabaseServer(newReservation).catch(() => {});
+  await Promise.allSettled([
+    sendReservationWebhook(newReservation, 'nova_reserva'),
+    syncReservationToSupabaseServer(newReservation),
+    directEmailTask(),
+  ]);
 
   res.status(201).json({
     success: true,
@@ -1608,13 +1612,11 @@ app.post('/api/admin/reservations', requireOwnerAuth, async (req: Request, res: 
   state.reservations.unshift(newRes);
   saveDb(state);
 
-  // Disparar Webhook n8n (Nova Reserva Manual)
-  sendReservationWebhook(newRes).catch((err) => {
-    console.error('[N8N DISPATCH ERROR]', err);
-  });
-
-  // Sincronizar com Supabase
-  syncReservationToSupabaseServer(newRes).catch(() => {});
+  // Disparar imediatamente em paralelo Webhook n8n + Sincronização Supabase
+  await Promise.allSettled([
+    sendReservationWebhook(newRes, 'nova_reserva'),
+    syncReservationToSupabaseServer(newRes),
+  ]);
 
   res.status(201).json(newRes);
 });
@@ -1636,11 +1638,11 @@ app.patch('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, 
     ...req.body,
   };
 
+  const asyncTasks: Promise<any>[] = [];
+
   // If status changed to cancelada, notify n8n with cancellation email template
   if (req.body.status === 'cancelada' && oldStatus !== 'cancelada') {
-    sendReservationWebhook(state.reservations[index], 'cancelamento_reserva').catch((err) => {
-      console.error('[N8N CANCEL DISPATCH ERROR]', err);
-    });
+    asyncTasks.push(sendReservationWebhook(state.reservations[index], 'cancelamento_reserva'));
   }
 
   // If status changed to concluida, send completion SMS and thank-you Email
@@ -1649,8 +1651,10 @@ app.patch('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, 
     const compSms = generateCompletionSms(resItem, state.settings);
     const compEmail = generateCompletionEmail(resItem, state.settings);
 
-    const smsRecord = await dispatchSms(resItem.customerPhone, compSms, 'conclusao_refeicao');
-    const emailRecord = await dispatchEmail(resItem.customerEmail, compEmail.subject, compEmail.body, 'conclusao_refeicao');
+    const [smsRecord, emailRecord] = await Promise.all([
+      dispatchSms(resItem.customerPhone, compSms, 'conclusao_refeicao'),
+      dispatchEmail(resItem.customerEmail, compEmail.subject, compEmail.body, 'conclusao_refeicao'),
+    ]);
 
     state.reservations[index].completionSmsSent = true;
     state.reservations[index].completionEmailSent = true;
@@ -1667,7 +1671,8 @@ app.patch('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, 
   }
 
   saveDb(state);
-  syncReservationToSupabaseServer(state.reservations[index]).catch(() => {});
+  asyncTasks.push(syncReservationToSupabaseServer(state.reservations[index]));
+  await Promise.allSettled(asyncTasks);
   res.json(state.reservations[index]);
 });
 
@@ -1789,18 +1794,17 @@ app.post('/api/admin/reservations/:id/send-reminder', requireOwnerAuth, async (r
 });
 
 // Delete Reservation
-app.delete('/api/admin/reservations/:id', requireOwnerAuth, (req: Request, res: Response) => {
+app.delete('/api/admin/reservations/:id', requireOwnerAuth, async (req: Request, res: Response) => {
   const { id } = req.params;
   const state = loadDb();
   const resItem = state.reservations.find((r) => r.id === id);
-  if (resItem) {
-    const cancelledRes: Reservation = { ...resItem, status: 'cancelada' };
-    sendReservationWebhook(cancelledRes, 'cancelamento_reserva').catch((err) => {
-      console.error('[N8N DELETE/CANCEL DISPATCH ERROR]', err);
-    });
-  }
   state.reservations = state.reservations.filter((r) => r.id !== id);
   saveDb(state);
+
+  if (resItem) {
+    const cancelledRes: Reservation = { ...resItem, status: 'cancelada' };
+    await sendReservationWebhook(cancelledRes, 'cancelamento_reserva');
+  }
   res.json({ success: true });
 });
 

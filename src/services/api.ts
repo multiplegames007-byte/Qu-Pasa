@@ -277,8 +277,10 @@ export async function submitPublicReservation(data: {
     source: 'online',
   });
 
-  await syncReservationToSupabase(local).catch(() => {});
-  sendClientN8nWebhook(local, 'nova_reserva').catch(() => {});
+  await Promise.allSettled([
+    syncReservationToSupabase(local),
+    sendClientN8nWebhook(local, 'nova_reserva'),
+  ]);
   return local;
 }
 
@@ -542,8 +544,10 @@ export async function createOwnerReservation(data: Partial<Reservation>): Promis
     source: data.source || 'telefone',
   });
 
-  await syncReservationToSupabase(local).catch(() => {});
-  sendClientN8nWebhook(local, 'nova_reserva').catch(() => {});
+  await Promise.allSettled([
+    syncReservationToSupabase(local),
+    sendClientN8nWebhook(local, 'nova_reserva'),
+  ]);
   return local;
 }
 
@@ -587,11 +591,11 @@ export async function updateOwnerReservation(id: string, updates: Partial<Reserv
       ...updates,
     } as Reservation);
 
-  await syncReservationToSupabase(finalRes).catch(() => {});
-
+  const tasks: Promise<any>[] = [syncReservationToSupabase(finalRes)];
   if (updates.status === 'cancelada' && previous?.status !== 'cancelada') {
-    sendClientN8nWebhook(finalRes, 'cancelamento_reserva').catch(() => {});
+    tasks.push(sendClientN8nWebhook(finalRes, 'cancelamento_reserva'));
   }
+  await Promise.allSettled(tasks);
 
   return finalRes;
 }
